@@ -36,6 +36,7 @@
   "frontend.timeformat": "LT",
   "routes.addeventattendeesubject": "{{ eventName }} への参加を登録しました",
   "routes.addeventcommentsubject": "{{ eventName }} にコメントがきました",
+  "routes.commenttoolong": "コメントと返信は {{maxCommentLength}} 文字以内にしてください。",
   "routes.deleteeventsubject": "{{ eventName }} は削除されました",
   "routes.event.datetimeformat": "{{thedate, long}}",
   "routes.event.descriptionchanged": "説明が変更",

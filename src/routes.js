@@ -1,7 +1,12 @@
 import fs from "fs";
 import express from "express";
 import { customAlphabet } from "nanoid";
-import { frontendConfig, getConfig } from "./lib/config.js";
+import {
+  frontendConfig,
+  getConfig,
+  getMaxCommentLength,
+} from "./lib/config.js";
+import { getConfigMiddleware } from "./lib/middleware.js";
 import { addToLog } from "./helpers.js";
 import moment from "moment-timezone";
 import crypto from "crypto";
@@ -29,6 +34,7 @@ const nanoid = customAlphabet(
 
 const router = express.Router();
 router.use(fileUpload());
+router.use(getConfigMiddleware);
 
 // SCHEDULED DELETION
 schedule.scheduleJob("59 23 * * *", function (_fireDate) {
@@ -672,11 +678,23 @@ router.get("/unsubscribe/:eventGroupID", (req, res) => {
 });
 
 router.post("/post/comment/:eventID", (req, res) => {
+  const maxCommentLength = getMaxCommentLength(res.locals.config);
+  const commentContent =
+    typeof req.body.commentContent === "string" ? req.body.commentContent : "";
+  if (commentContent.length > maxCommentLength) {
+    return res
+      .status(400)
+      .send(
+        i18next.t("routes.commenttoolong", {
+          maxCommentLength,
+        }),
+      );
+  }
   let commentID = nanoid();
   const newComment = {
     id: commentID,
     author: req.body.commentAuthor,
-    content: req.body.commentContent,
+    content: commentContent,
     timestamp: moment(),
   };
 
@@ -769,12 +787,24 @@ router.post("/post/comment/:eventID", (req, res) => {
 });
 
 router.post("/post/reply/:eventID/:commentID", (req, res) => {
+  const maxCommentLength = getMaxCommentLength(res.locals.config);
+  const replyContent =
+    typeof req.body.replyContent === "string" ? req.body.replyContent : "";
+  if (replyContent.length > maxCommentLength) {
+    return res
+      .status(400)
+      .send(
+        i18next.t("routes.commenttoolong", {
+          maxCommentLength,
+        }),
+      );
+  }
   let replyID = nanoid();
   let commentID = req.params.commentID;
   const newReply = {
     id: replyID,
     author: req.body.replyAuthor,
-    content: req.body.replyContent,
+    content: replyContent,
     timestamp: moment(),
   };
   Event.findOne(

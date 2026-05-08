@@ -99,6 +99,36 @@ describe("Events", () => {
     cy.get(".comment").should("contain.text", "Test Comment");
   });
 
+  it("rejects comments longer than the configured limit", function () {
+    cy.setCookie(
+      "cypressConfigOverride",
+      JSON.stringify({
+        general: {
+          max_comment_length: 10,
+        },
+      }),
+    );
+    cy.visit(`/${this.eventID}`);
+    cy.get("#commentContent").should("have.attr", "maxlength", "10");
+
+    cy.request({
+      method: "POST",
+      url: `/post/comment/${this.eventID}/`,
+      form: true,
+      failOnStatusCode: false,
+      body: {
+        commentAuthor: "Test Author",
+        commentContent: "12345678901",
+      },
+    }).then((response) => {
+      expect(response.status).to.eq(400);
+      expect(response.body).to.contain("at most 10 characters");
+    });
+
+    cy.visit(`/${this.eventID}`);
+    cy.get(".comment").should("not.exist");
+  });
+
   it("displays the ActivityPub featured post", function () {
     cy.log(this.eventID);
 

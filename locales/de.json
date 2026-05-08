@@ -36,6 +36,7 @@
   "frontend.timeformat": "H:mm",
   "routes.addeventattendeesubject": "Du bist für {{ eventName }} angemeldet",
   "routes.addeventcommentsubject": "Neuer Kommentar in {{eventName}}",
+  "routes.commenttoolong": "Kommentare und Antworten dürfen höchstens {{maxCommentLength}} Zeichen lang sein.",
   "routes.deleteeventsubject": "{{ eventName }} wurde gelöscht",
   "routes.event.datetimeformat": "{{thedate, intlDate}}",
   "routes.event.descriptionchanged": "Die Veranstaltungsbeschreibung wurde geändert",

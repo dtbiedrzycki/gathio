@@ -5,7 +5,7 @@ import { customAlphabet } from "nanoid";
 import moment from "moment-timezone";
 import i18next from "i18next";
 import sanitizeHtml from "sanitize-html";
-import { getConfig } from "./lib/config.js";
+import { getConfig, getMaxCommentLength } from "./lib/config.js";
 const config = getConfig();
 const domain = config.general.domain;
 const siteName = config.general.site_name;
@@ -884,15 +884,22 @@ async function _handleCreateNoteComment(req: Request, res: Response) {
     const parsedActor = await signedFetch(req.body.actor, eventID);
     const name =
       parsedActor.preferredUsername || parsedActor.name || req.body.actor;
+    const content = sanitizeHtml(req.body.object.content, {
+      allowedTags: [],
+      allowedAttributes: {},
+    }).replace(`@${eventID}`, "");
+    const maxCommentLength = getMaxCommentLength(res.locals.config);
+    if (content.length > maxCommentLength) {
+      return res
+        .status(400)
+        .send(i18next.t("routes.commenttoolong", { maxCommentLength }));
+    }
     const newComment = {
       id: commentID,
       actorId: req.body.actor,
       activityId: req.body.object.id,
       author: name,
-      content: sanitizeHtml(req.body.object.content, {
-        allowedTags: [],
-        allowedAttributes: {},
-      }).replace(`@${eventID}`, ""),
+      content,
       timestamp: moment().toDate(),
       activityJson: JSON.stringify(req.body),
       actorJson: JSON.stringify(parsedActor),
