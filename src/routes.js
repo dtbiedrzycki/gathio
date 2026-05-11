@@ -682,13 +682,11 @@ router.post("/post/comment/:eventID", (req, res) => {
   const commentContent =
     typeof req.body.commentContent === "string" ? req.body.commentContent : "";
   if (commentContent.length > maxCommentLength) {
-    return res
-      .status(400)
-      .send(
-        i18next.t("routes.commenttoolong", {
-          maxCommentLength,
-        }),
-      );
+    return res.status(400).send(
+      i18next.t("routes.commenttoolong", {
+        maxCommentLength,
+      }),
+    );
   }
   let commentID = nanoid();
   const newComment = {
@@ -791,13 +789,11 @@ router.post("/post/reply/:eventID/:commentID", (req, res) => {
   const replyContent =
     typeof req.body.replyContent === "string" ? req.body.replyContent : "";
   if (replyContent.length > maxCommentLength) {
-    return res
-      .status(400)
-      .send(
-        i18next.t("routes.commenttoolong", {
-          maxCommentLength,
-        }),
-      );
+    return res.status(400).send(
+      i18next.t("routes.commenttoolong", {
+        maxCommentLength,
+      }),
+    );
   }
   let replyID = nanoid();
   let commentID = req.params.commentID;
