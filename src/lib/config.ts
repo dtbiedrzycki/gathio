@@ -22,6 +22,7 @@ export interface GathioConfig {
     email_logo_url: string;
     show_kofi: boolean;
     show_public_event_list: boolean;
+    max_comment_length: number;
     mail_service: "nodemailer" | "sendgrid" | "mailgun" | "none";
     creator_email_addresses: string[];
   };
@@ -54,9 +55,12 @@ interface FrontendConfig {
   showKofi: boolean;
   showPublicEventList: boolean;
   showInstanceInformation: boolean;
+  maxCommentLength: number;
   staticPages?: StaticPage[];
   version: string;
 }
+
+export const DEFAULT_MAX_COMMENT_LENGTH = 5000;
 
 const defaultConfig: GathioConfig = {
   general: {
@@ -69,6 +73,7 @@ const defaultConfig: GathioConfig = {
     email_logo_url: "",
     show_public_event_list: false,
     show_kofi: false,
+    max_comment_length: DEFAULT_MAX_COMMENT_LENGTH,
     mail_service: "none",
     creator_email_addresses: [],
   },
@@ -88,6 +93,7 @@ export const frontendConfig = (res: Response): FrontendConfig => {
       showPublicEventList: defaultConfig.general.show_public_event_list,
       showKofi: defaultConfig.general.show_kofi,
       showInstanceInformation: false,
+      maxCommentLength: getMaxCommentLength(),
       staticPages: [],
       version: process.env.npm_package_version || "unknown",
     };
@@ -100,9 +106,25 @@ export const frontendConfig = (res: Response): FrontendConfig => {
     showPublicEventList: !!config.general.show_public_event_list,
     showKofi: !!config.general.show_kofi,
     showInstanceInformation: !!config.static_pages?.length,
+    maxCommentLength: getMaxCommentLength(config),
     staticPages: config.static_pages,
     version: process.env.npm_package_version || "unknown",
   };
+};
+
+export const getMaxCommentLength = (
+  config: Pick<GathioConfig, "general"> | null = null,
+): number => {
+  const value = config?.general.max_comment_length;
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < 1 ||
+    !Number.isInteger(value)
+  ) {
+    return DEFAULT_MAX_COMMENT_LENGTH;
+  }
+  return value;
 };
 
 interface InstanceRule {

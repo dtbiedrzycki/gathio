@@ -36,6 +36,7 @@
   "frontend.timeformat": "h:mm a",
   "routes.addeventattendeesubject": "You're RSVPed to {{ eventName }}",
   "routes.addeventcommentsubject": "New comment in {{eventName}}",
+  "routes.commenttoolong": "Comments and replies must be at most {{maxCommentLength}} characters long.",
   "routes.attendeeawaitingapprovalsubject": "New attendee awaiting approval for {{ eventName }}",
   "routes.attendeependingconfirmationsubject": "Your RSVP to {{ eventName }} is pending approval",
   "routes.attendeeapprovedsubject": "You've been approved to attend {{ eventName }}",

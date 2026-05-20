@@ -367,7 +367,7 @@
       <label for="commentContent">{{t "views.event.comment" }}</label>
       <div class="form-group">
         <div class="d-flex flex-gap">
-          <textarea class="form-control" id="commentContent" name="commentContent" style="resize: none;" placeholder="{{t "views.event.commentcontent" }}" required></textarea>
+          <textarea class="form-control" id="commentContent" name="commentContent" style="resize: none;" placeholder="{{t "views.event.commentcontent" }}" maxlength="{{maxCommentLength}}" required></textarea>
           <div class="input-group-append">
             <button type="submit" class="button button--primary" id="postComment">{{t "views.event.postbutton" }} <i class="fas fa-chevron-right"></i></button>
           </div>
@@ -418,7 +418,7 @@
                 </div>
                 <div class="form-group">
                   <div class="d-flex flex-gap">
-                    <textarea class="form-control form-control-sm" id="replyContent" name="replyContent" style="resize: none;" placeholder="{{t "views.event.replycontent" }}" required></textarea>
+                    <textarea class="form-control form-control-sm" id="replyContent" name="replyContent" style="resize: none;" placeholder="{{t "views.event.replycontent" }}" maxlength="{{maxCommentLength}}" required></textarea>
                     <div class="input-group-append">
                     </div>
                       <button type="submit" class="button button--primary button--sm" id="postReply">{{t "views.event.reply" }} <i class="fas fa-chevron-right"></i></button>

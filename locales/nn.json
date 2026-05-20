@@ -36,6 +36,7 @@
   "frontend.timeformat": "HH.mm",
   "routes.addeventattendeesubject": "Du er meldt på {{ eventName }}",
   "routes.addeventcommentsubject": "Ny kommentar i {{eventName}}",
+  "routes.commenttoolong": "Kommentarar og svar kan vere høgst {{maxCommentLength}} teikn lange.",
   "routes.deleteeventsubject": "{{ eventName }} vart sletta",
   "routes.event.datetimeformat": "{{thedate, intlDate}}",
   "routes.event.descriptionchanged": "skildringa av arrangementet vart endra",
