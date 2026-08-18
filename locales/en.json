@@ -225,6 +225,8 @@
   "views.event.attendees_hidden": "The list of attendees is hidden",
   "views.event.nospam": "We won't spam you <3",
   "views.event.numberofattende": "({{numberOfAttendees}})",
+  "views.event.cantattend": "Can't attend",
+  "views.event.numberofcantattend": "({{numberOfDeclined}})",
   "views.event.numlimit": "Please enter a number between 1 and ${response.data.freeSpots}",
   "views.event.partof": "<a href='/group/{{eventData.eventGroup.id}}'>{{eventData.eventGroup.name}}</a>",
   "views.event.postbutton": "Post comment",
