@@ -175,9 +175,14 @@ runner in this repo).
 
         // Collect answers to the event's custom questions. This is a plain form
         // POST, so a bad answer redirects with a message rather than serving raw
-        // JSON. Skipped entirely for a bare toggle (no question fields present).
+        // JSON. Skipped entirely for a bare toggle (no question fields present in
+        // the body) so a one-click "switch back to attending" doesn't wipe out
+        // previously-submitted answers - collectCustomQuestionAnswers would
+        // otherwise happily return [] for a body with none of the expected keys.
+        // The real field name pattern, from collectCustomQuestionAnswers itself
+        // (src/routes/event.ts:79), is `customQuestionAnswer-${question.id}`.
         const hasQuestionFields = Object.keys(req.body).some((key) =>
-          key.startsWith("customQuestion_"),
+          key.startsWith("customQuestionAnswer-"),
         );
         let answers = attendee.answers || [];
         if (hasQuestionFields) {
