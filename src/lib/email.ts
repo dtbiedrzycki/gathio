@@ -25,6 +25,7 @@ type EmailTemplateName =
   | "createEvent"
   | "createEventGroup"
   | "createEventMagicLink"
+  | "declineEvent"
   | "deleteEvent"
   | "editEvent"
   | "eventGroupUpdated"

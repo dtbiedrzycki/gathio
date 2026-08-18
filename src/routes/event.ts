@@ -804,28 +804,36 @@ router.get(
     }
     const attendee = event.attendees?.find(
       (o) =>
-        hashString(o.removalPassword || "") === req.params.removalPasswordHash,
+        hashString(o.removalPassword || "") ===
+        req.params.removalPasswordHash,
     );
     if (!attendee) {
       return res.redirect(`/${req.params.eventID}`);
     }
-    // Remove the attendee from the event
-    event.attendees = event.attendees?.filter(
-      (o) => o.removalPassword !== attendee.removalPassword,
-    );
+    // Mark the attendee as declined rather than deleting their record
+    attendee.status = "declined";
+    event.markModified("attendees");
     await event.save();
     // Send email to the attendee
     if (attendee.email) {
       req.emailService.sendEmailFromTemplate({
         to: attendee.email,
-        subject: `You have been removed from ${event.name}`,
-        templateName: "unattendEvent",
+        subject: i18next.t("routes.declineeventattendeesubject"),
+        templateName: "declineEvent",
         templateData: {
-          event,
+          eventID: req.params.eventID,
+          eventName: event.name,
         },
       });
     }
-    return res.redirect(`/${req.params.eventID}?m=unattend`);
+    addToLog(
+      "declineEventAttendee",
+      "success",
+      `Attendee declined event ${req.params.eventID} via one-click link`,
+    );
+    return res.redirect(
+      `/${req.params.eventID}?p=${encodeURIComponent(attendee.removalPassword || "")}`,
+    );
   },
 );
 
