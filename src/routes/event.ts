@@ -804,8 +804,7 @@ router.get(
     }
     const attendee = event.attendees?.find(
       (o) =>
-        hashString(o.removalPassword || "") ===
-        req.params.removalPasswordHash,
+        hashString(o.removalPassword || "") === req.params.removalPasswordHash,
     );
     if (!attendee) {
       return res.redirect(`/${req.params.eventID}`);
