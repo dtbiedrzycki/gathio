@@ -1,3 +1,5 @@
+allowBuilds:
+  cypress: true
 onlyBuiltDependencies:
   - cypress
 # Makes Cypress work in CI (cf. https://github.com/cypress-io/github-action/issues/1363)
