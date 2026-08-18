@@ -338,6 +338,38 @@
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="declineModal" tabindex="-1" role="dialog" aria-labelledby="declineModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="declineModalLabel">{{t "views.event.declineself" }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="declineEventForm" action="/event/{{eventData.id}}/attendee" method="post">
+        {{#if editingEnabled}}
+          <input type="hidden" name="editToken" value="{{eventData.editToken}}">
+        {{/if}}
+        <input type="hidden" name="attendeeStatus" value="declined">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="declineAttendeeName">{{t "views.event.attendeename" }}</label>
+            <div class="form-group">
+              <input type="text" class="form-control" id="declineAttendeeName" name="attendeeName" placeholder="{{t 'views.event.attendeenamedesc'}}" data-validation="required length" data-validation-length="1-30">
+            </div>
+          </div>
+          <input type="hidden" id="declineRemovalPassword" name="removalPassword">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="button button--secondary" data-dismiss="modal">{{t "common.close" }}</button>
+          <button type="submit" class="button button--primary">{{t "views.event.removeme" }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 </div>
   {{#if editingEnabled}}
   <div class="modal fade" id="removeAttendeeModal" tabindex="-1" role="dialog" aria-labelledby="removeAttendeeModalLabel" aria-hidden="true" data-event-id="{{eventData.id}}" data-edit-token="{{eventData.editToken}}">
@@ -368,19 +400,28 @@
         <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{t "views.event.addattendee" }}</button>
       {{/unless}}
     {{else}}
-      {{#if viewerRegistered}}
+      {{#if viewerDeclined}}
         <span class="rsvp-bar__status">
-          {{#if viewerRegisteredUnapproved}}
-            <i class="fas fa-clock"></i> {{t "views.event.pendingapproval" }}
-          {{else}}
-            <i class="fas fa-check-circle"></i> {{t "views.event.youaregoing" }}
-          {{/if}}
+          <i class="fas fa-times-circle"></i> {{t "views.event.youdeclined" }}
         </span>
-        <button type="button" id="unattendEvent" class="button button--secondary" data-toggle="modal" data-target="#unattendModal"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
+        <button type="button" id="reattendEvent" class="button button--primary"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
+        <button type="button" id="deleteMyInfo" class="button button--outline-secondary button--sm" data-toggle="modal" data-target="#unattendModal">{{t "views.event.deletemyinfo" }}</button>
       {{else}}
-        {{#unless noMoreSpots}}
-          <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
-        {{/unless}}
+        {{#if viewerRegistered}}
+          <span class="rsvp-bar__status">
+            {{#if viewerRegisteredUnapproved}}
+              <i class="fas fa-clock"></i> {{t "views.event.pendingapproval" }}
+            {{else}}
+              <i class="fas fa-check-circle"></i> {{t "views.event.youaregoing" }}
+            {{/if}}
+          </span>
+          <button type="button" id="declineExisting" class="button button--secondary"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
+        {{else}}
+          {{#unless noMoreSpots}}
+            <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
+          {{/unless}}
+          <button type="button" id="declineEvent" class="button button--secondary" data-event-id="{{eventData.id}}"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
+        {{/if}}
       {{/if}}
     {{/if}}
   </div>
@@ -745,6 +786,48 @@ window.eventData = {{{ json jsonData }}};
           console.error(error);
           return false;
         });
+    });
+    $('#declineEvent').on('click', function(event) {
+      const modal = $('#declineModal');
+      const eventID = $(this).attr('data-event-id');
+      axios.post('/attendee/provision', {}, { params: { eventID }})
+        .then((response) => {
+          modal.find('#declineRemovalPassword').val(response.data.removalPassword);
+          try {
+            const rpStore = JSON.parse(localStorage.getItem('gathioRemovalPasswords') || '{}');
+            rpStore[eventID] = response.data.removalPassword;
+            localStorage.setItem('gathioRemovalPasswords', JSON.stringify(rpStore));
+          } catch(e) { /* ignore persistence errors */ }
+          modal.modal();
+        })
+        .catch((error) => {
+          console.error(error);
+          return false;
+        });
+    });
+
+    function toggleRsvpStatus(targetStatus) {
+      const eventID = $('#eventName').attr('data-event-id');
+      const removalPassword = new URLSearchParams(window.location.search).get('p');
+      if (!removalPassword) {
+        console.error('No removal password found for RSVP toggle');
+        return;
+      }
+      axios.post(`/event/${eventID}/attendee`, { removalPassword, attendeeStatus: targetStatus })
+        .then(() => {
+          window.location.reload();
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+
+    $('#declineExisting').on('click', function() {
+      toggleRsvpStatus('declined');
+    });
+
+    $('#reattendEvent').on('click', function() {
+      toggleRsvpStatus('attending');
     });
 
       $('#verifyTokenForm').on('submit', function(e) {
