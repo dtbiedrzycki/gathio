@@ -863,8 +863,17 @@ li.hidden-attendee .attendee-name {
   padding: 0.75rem 1rem;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
   gap: 0.5rem;
+}
+
+.rsvp-bar__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #28a745;
 }
 
 @media (max-width: 1199.98px) {
