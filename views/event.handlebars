@@ -802,6 +802,7 @@ window.eventData = {{{ json jsonData }}};
         })
         .catch((error) => {
           console.error(error);
+          alert('Failed to open the RSVP form');
           return false;
         });
     });
@@ -811,6 +812,7 @@ window.eventData = {{{ json jsonData }}};
       const removalPassword = new URLSearchParams(window.location.search).get('p');
       if (!removalPassword) {
         console.error('No removal password found for RSVP toggle');
+        alert('Failed to update your RSVP');
         return;
       }
       axios.post(`/event/${eventID}/attendee`, { removalPassword, attendeeStatus: targetStatus })
@@ -819,6 +821,7 @@ window.eventData = {{{ json jsonData }}};
         })
         .catch((error) => {
           console.error(error);
+          alert('Failed to update your RSVP');
         });
     }
 
