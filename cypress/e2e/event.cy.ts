@@ -352,12 +352,12 @@ describe("Events", () => {
           .digest("hex");
         const unattendLink = `/event/${this.eventID}/unattend/${removalPasswordHash}`;
         cy.visit(unattendLink);
-        cy.get("#event__message").should(
+        cy.url().should("include", `?p=`);
+        cy.get(".rsvp-bar__status").should(
           "contain.text",
-          "You have been removed from this event.",
+          "You said you can't attend",
         );
         cy.get("#attendees-alert").should("contain.text", "10 spots remaining");
-        cy.get("#eventAttendees").should("contain.text", "No attendees yet!");
       });
   });
   describe("Query string editing tokens", function () {
