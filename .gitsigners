@@ -1,0 +1,4 @@
+# Trusted SSH signing keys for this repo (local verification only).
+# Format: <principal> namespaces="git" <keytype> <key> <comment=machine>
+# These keys are NEVER uploaded to Forgejo/GitHub -- they sign only, they do not authenticate.
+foss@dtbiedrzycki.com namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDr2NF45tFC3UN0wckn3vHoDPv1drEap7DByRDK8n/KC dtbiedrzycki's gathio dev bot

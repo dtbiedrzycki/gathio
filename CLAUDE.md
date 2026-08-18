@@ -113,3 +113,48 @@ app's own scripts are in `public/js/modules/`.
 `EmailService` (`src/lib/email.ts`) wraps nodemailer / SendGrid / Mailgun / none, chosen by
 `general.mail_service`, and renders the paired Handlebars templates. It is attached to every request as
 `req.emailService` (see `src/index.d.ts` for the Express type augmentation).
+
+## Committing
+
+Commits made by Claude Code from inside the sandboxed `toolbx` container are SSH-signed
+with a container-specific key, so the machine that produced a commit can be identified
+later. Use this invocation:
+
+```bash
+git -c gpg.format=ssh \
+    -c user.signingkey=~/.ssh/<signing_key> \
+    commit -S -m "<subject>
+
+<body>
+
+Commit-Machine: toolbx"
+```
+
+The signature is the proof of origin; the `Commit-Machine` trailer makes `git log`
+readable without running verification. Signed-with-this-key means the container; the
+maintainer's own commits carry their GPG signature instead.
+
+Keep `Commit-Machine` in the same paragraph as any `Co-Authored-By` line — git parses only
+the final paragraph as trailers, so a blank line between them silently drops
+`Commit-Machine` from the trailer block. Check with
+`git log -1 --format='%(trailers:key=Commit-Machine,valueonly)'`.
+
+Do not move these settings into `.git/config` — this directory is also used from outside
+the container, and repo-local signing config would re-sign the maintainer's commits with
+the container key. (The sandbox blocks `git config` writes anyway: `.git/config.lock` is
+bind-mounted from `/dev/null`.)
+
+Verification uses `.gitsigners` in the repo root, which maps each trusted signing key to
+the machine it belongs to:
+
+```bash
+git -c gpg.ssh.allowedSignersFile=$PWD/.gitsigners log --format='%h %G? %GS' -5
+```
+
+`G` = good trusted signature, `U` = good signature from an untrusted key, `N` = unsigned.
+Set `gpg.ssh.allowedSignersFile` once (outside the sandbox) to skip the `-c` flag.
+
+The signing key is passphrase-less so it can sign unattended: the sandbox denies AF_UNIX
+sockets outright, so no ssh-agent or gpg-agent is reachable. It is safe because it is
+**signing-only and never uploaded anywhere** — Forgejo cannot scope an SSH key to signing
+only, so uploading it would turn it into a push credential.
