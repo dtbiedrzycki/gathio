@@ -411,7 +411,7 @@ body > #container {
 #container
   > #content
   > main.event
-  > *:not(.event-header-image, .event__editing-banner) {
+  > *:not(.event-header-image, .event__editing-banner, .rsvp-bar) {
   margin: 0 1rem;
 }
 
@@ -843,18 +843,27 @@ li.hidden-attendee .attendee-name {
 }
 
 .event--has-rsvp-bar {
-  padding-bottom: 4.5rem;
+  padding-bottom: 5.5rem;
 }
 
 .rsvp-bar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.5rem;
   z-index: 1030;
+  margin: 0;
   background: #fff;
-  border-top: 1px solid rgba(0, 0, 0, 0.125);
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 576px) {
+  .rsvp-bar {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
 }
 
 .rsvp-bar__inner {
