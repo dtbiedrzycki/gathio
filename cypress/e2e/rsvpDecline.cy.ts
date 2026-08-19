@@ -77,6 +77,11 @@ describe("RSVP Decline", () => {
     // behind it - its backdrop blocks clicks until closed.
     cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
     cy.get("#rsvpConfirmModal .close").click();
+    // Bootstrap's modal close is a CSS fade transition - the modal (and its
+    // click-blocking backdrop) is still display:block for a moment after
+    // the close click resolves, so wait for it to actually finish hiding
+    // before interacting with anything behind it.
+    cy.get("#rsvpConfirmModal").should("not.be.visible");
 
     cy.get(".rsvp-bar__status").should("contain.text", "You're going");
     cy.get(".attendeesList").should("contain.text", "Maybe Later");
@@ -85,6 +90,11 @@ describe("RSVP Decline", () => {
     cy.get("button#declineExisting").click();
     cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
     cy.get("#rsvpConfirmModal .close").click();
+    // Bootstrap's modal close is a CSS fade transition - the modal (and its
+    // click-blocking backdrop) is still display:block for a moment after
+    // the close click resolves, so wait for it to actually finish hiding
+    // before interacting with anything behind it.
+    cy.get("#rsvpConfirmModal").should("not.be.visible");
     cy.get(".rsvp-bar__status").should(
       "contain.text",
       "You said you can't attend",
@@ -124,6 +134,11 @@ describe("RSVP Decline", () => {
 
     cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
     cy.get("#rsvpConfirmModal .close").click();
+    // Bootstrap's modal close is a CSS fade transition - the modal (and its
+    // click-blocking backdrop) is still display:block for a moment after
+    // the close click resolves, so wait for it to actually finish hiding
+    // before interacting with anything behind it.
+    cy.get("#rsvpConfirmModal").should("not.be.visible");
 
     cy.get("button#deleteMyInfo").click();
     cy.get("#unattendModal").should("be.visible");
