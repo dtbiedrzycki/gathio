@@ -327,7 +327,7 @@ describe("Events", () => {
     cy.get("#event-group").should("contain.text", "Test Group");
   });
 
-  it("declines your RSVP via a one-click unattend link", function () {
+  it("declines your RSVP via the emailed unattend link", function () {
     cy.get("button#attendEvent").click();
     cy.get("#attendModal").should("be.visible");
     cy.get("#attendModal").should("have.focus");
@@ -356,9 +356,10 @@ describe("Events", () => {
             win.localStorage.clear();
           },
         });
-        // The one-click link only lands on a confirmation page (GET must
-        // stay side-effect-free, e.g. for email link-prefetch scanners) -
-        // the actual decline happens on the confirm button's POST.
+        // The link only lands on a confirmation page (GET must stay
+        // side-effect-free, e.g. for email link-prefetch scanners) - the
+        // actual decline happens on the confirm button's POST, so this is
+        // a two-step confirm, not a one-click action.
         cy.get("button#rsvpConfirmButton").click();
         cy.url().should("include", `?p=`);
         cy.get(".rsvp-bar__status").should(
