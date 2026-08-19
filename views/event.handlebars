@@ -847,7 +847,11 @@ window.eventData = {{{ json jsonData }}};
       }
       axios.post(`/event/${eventID}/attendee`, { removalPassword, attendeeStatus: targetStatus })
         .then(() => {
-          window.location.reload();
+          // location.reload() to the exact same URL is unreliable in some
+          // automated-browser environments (the navigation can complete
+          // without the load event Cypress waits on ever firing); replace()
+          // forces a real navigation that's reliably detected.
+          window.location.replace(window.location.href);
         })
         .catch((error) => {
           console.error(error);
