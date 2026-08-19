@@ -36,7 +36,7 @@ describe("RSVP Decline", () => {
     cy.url().then((url) => {
       const [eventID, editToken] = url.split("/").pop()!.split("?");
       cy.wrap(eventID).as("eventID");
-      cy.wrap(editToken).as("editToken");
+      cy.wrap(editToken.slice(2)).as("editToken");
     });
   });
 
