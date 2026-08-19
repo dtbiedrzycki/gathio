@@ -1,6 +1,6 @@
 {{t "views.emails.addeventattendee.preface" }}
 
-{{t "views.emails.addeventattendee.eventlink" }}: https://{{domain}}/{{eventID}}
+{{t "views.emails.addeventattendee.eventlink" }}: https://{{domain}}/{{eventID}}?p={{removalPassword}}
 {{#if answers.length}}
 
 {{t "views.emails.youranswers" }}
@@ -10,6 +10,8 @@
 {{/if}}
 
 {{t "views.emails.addeventattendee.removelink" }}: https://{{domain}}/event/{{eventID}}/unattend/{{removalPasswordHash}}
+
+{{t "views.emails.addeventattendee.eraselink" }}: https://{{domain}}/event/{{eventID}}/erase/{{removalPasswordHash}}
 
 {{t "views.emails.addeventattendee.removepassword" }}: {{removalPassword}}
 

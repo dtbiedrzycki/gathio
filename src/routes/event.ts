@@ -837,6 +837,46 @@ router.get(
   },
 );
 
+// One-click full data erasure from an email, as opposed to the unattend
+// link above which only declines. Removes the attendee record entirely.
+router.get(
+  "/event/:eventID/erase/:removalPasswordHash",
+  async (req: Request, res: Response) => {
+    const event = await Event.findOne({ id: req.params.eventID });
+    if (!event) {
+      return res.redirect("/404");
+    }
+    const attendee = event.attendees?.find(
+      (o) =>
+        hashString(o.removalPassword || "") === req.params.removalPasswordHash,
+    );
+    if (!attendee) {
+      return res.redirect(`/${req.params.eventID}`);
+    }
+    const attendeeEmail = attendee.email;
+    await Event.updateOne(
+      { id: req.params.eventID },
+      { $pull: { attendees: { removalPassword: attendee.removalPassword } } },
+    );
+    if (attendeeEmail) {
+      await req.emailService.sendEmailFromTemplate({
+        to: attendeeEmail,
+        subject: i18next.t("routes.removeeventattendeesubject"),
+        templateName: "unattendEvent",
+        templateData: {
+          eventID: req.params.eventID,
+        },
+      });
+    }
+    addToLog(
+      "eraseEventAttendee",
+      "success",
+      `Attendee erased self from event ${req.params.eventID} via one-click link`,
+    );
+    return res.redirect(`/${req.params.eventID}`);
+  },
+);
+
 // Finalize attendance (convert provisioned attendee to attending)
 router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
   const {
