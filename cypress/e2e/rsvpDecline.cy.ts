@@ -55,6 +55,7 @@ describe("RSVP Decline", () => {
     );
     cy.get("button#reattendEvent").should("be.visible");
     cy.get("button#deleteMyInfo").should("be.visible");
+    cy.get("#eventDeclined").should("not.exist");
 
     // Host sees the decline card; public attendee list is unaffected
     cy.visit(`/${this.eventID}?e=${this.editToken}`);
@@ -80,7 +81,7 @@ describe("RSVP Decline", () => {
       "contain.text",
       "You said you can't attend",
     );
-    cy.get(".attendeesList").should("not.contain.text", "Maybe Later");
+    cy.get("#eventAttendees").should("not.contain.text", "Maybe Later");
 
     // Switch back to attending
     cy.get("button#reattendEvent").click();

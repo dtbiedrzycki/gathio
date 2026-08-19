@@ -351,7 +351,11 @@ describe("Events", () => {
           .update(removalPassword)
           .digest("hex");
         const unattendLink = `/event/${this.eventID}/unattend/${removalPasswordHash}`;
-        cy.visit(unattendLink);
+        cy.visit(unattendLink, {
+          onBeforeLoad(win) {
+            win.localStorage.clear();
+          },
+        });
         cy.url().should("include", `?p=`);
         cy.get(".rsvp-bar__status").should(
           "contain.text",
