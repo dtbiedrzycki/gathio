@@ -157,24 +157,30 @@ function resolveLocationAccess(
       editingEnabled = true;
     }
   }
+  // Identify the viewer as an attendee (by ?p=) regardless of whether this
+  // event gates registrations behind host approval - the RSVP bar needs to
+  // know "is this viewer attending" on every event, not just approval-gated
+  // ones.
+  let viewerAttendee: AttendeeLite | undefined;
+  if (!editingEnabled && query.p) {
+    const removalPassword = String(query.p);
+    viewerAttendee = (event.attendees as AttendeeLite[] | undefined)?.find(
+      (a: AttendeeLite) =>
+        a.removalPassword === removalPassword && a.status === "attending",
+    );
+  }
+  const viewerAttendeeId: string | null = viewerAttendee
+    ? viewerAttendee._id?.toString() || viewerAttendee.id || null
+    : null;
+
   let viewerApprovedForLocation = true;
-  let viewerAttendeeId: string | null = null;
   if (approveRegistrations) {
     // Start hidden
     viewerApprovedForLocation = false;
     if (editingEnabled) {
       viewerApprovedForLocation = true;
-    } else if (query.p) {
-      const removalPassword = String(query.p);
-      const attendee = (event.attendees as AttendeeLite[] | undefined)?.find(
-        (a: AttendeeLite) => a.removalPassword === removalPassword,
-      );
-      if (attendee) {
-        viewerAttendeeId = attendee._id?.toString() || attendee.id || null;
-        if (attendee.approved) {
-          viewerApprovedForLocation = true;
-        }
-      }
+    } else if (viewerAttendee?.approved) {
+      viewerApprovedForLocation = true;
     }
   }
   // Host override (defensive, though covered above)
@@ -182,20 +188,9 @@ function resolveLocationAccess(
     viewerApprovedForLocation = true;
   }
   // Registration status flags for UI messaging
-  let viewerRegistered = false;
-  let viewerRegisteredUnapproved = false;
-  if (approveRegistrations && !editingEnabled && query.p) {
-    const removalPassword = String(query.p);
-    const attendee = (event.attendees as AttendeeLite[] | undefined)?.find(
-      (a: AttendeeLite) => a.removalPassword === removalPassword,
-    );
-    if (attendee) {
-      viewerRegistered = true;
-      if (!attendee.approved) {
-        viewerRegisteredUnapproved = true;
-      }
-    }
-  }
+  const viewerRegistered = !!viewerAttendee;
+  const viewerRegisteredUnapproved =
+    !!viewerAttendee && !viewerAttendee.approved;
   return {
     viewerApprovedForLocation,
     viewerRegistered,

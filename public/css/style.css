@@ -411,7 +411,7 @@ body > #container {
 #container
   > #content
   > main.event
-  > *:not(.event-header-image, .event__editing-banner) {
+  > *:not(.event-header-image, .event__editing-banner, .rsvp-bar) {
   margin: 0 1rem;
 }
 
@@ -838,28 +838,52 @@ li.hidden-attendee .attendee-name {
   color: #dc3545;
 }
 
-#eventAttendees h5 {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+.edit-buttons {
+  text-align: right;
 }
-#eventAttendees h5 .button--group {
-  margin-top: 0.5rem;
+
+.event--has-rsvp-bar {
+  padding-bottom: 5.5rem;
+}
+
+.rsvp-bar {
+  position: fixed;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  z-index: 1030;
+  margin: 0;
+  background: var(--color-purple-light);
+  border: 1px solid var(--color-purple-lighter);
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 @media (min-width: 576px) {
-  #eventAttendees h5 {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-  #eventAttendees h5 .button--group {
-    margin-top: 0;
+  .rsvp-bar {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
   }
 }
 
-.edit-buttons {
-  text-align: right;
+.rsvp-bar__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.rsvp-bar__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #28a745;
 }
 
 @media (max-width: 1199.98px) {

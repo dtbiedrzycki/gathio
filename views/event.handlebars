@@ -1,4 +1,4 @@
-<main class="event{{#if editingEnabled}} event--editing{{/if}}">
+<main class="event{{#if editingEnabled}} event--editing{{/if}}{{#if eventData.usersCanAttend}} event--has-rsvp-bar{{/if}}">
 {{#if editingEnabled}}
 <div class="event__editing-banner">
   {{t "views.event.currentlyediting" }}
@@ -153,16 +153,7 @@
 
 {{#if eventData.usersCanAttend}}
 <div class="card mb-4" id="eventAttendees">
-  <h5 class="card-header">{{t "views.event.attendees" }} {{#if numberOfAttendees}}{{t "views.event.numberofattende" }}{{/if}}
-    <div class="button--group" role="group" aria-label="Attendance controls">
-      {{#unless noMoreSpots}}
-        <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{#if editingEnabled }}{{t "views.event.addattendee" }}{{else}}{{t "views.event.addme" }}{{/if}}</button>
-      {{/unless}}
-      {{#unless editingEnabled}}
-        <button type="button" id="unattendEvent" class="button button--secondary" data-toggle="modal" data-target="#unattendModal"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
-      {{/unless}}
-    </div>
-  </h5>
+  <h5 class="card-header">{{t "views.event.attendees" }} {{#if numberOfAttendees}}{{t "views.event.numberofattende" }}{{/if}}</h5>
   <div class="card-body text-center">
     {{#if eventData.maxAttendees}}
       {{#if noMoreSpots}}
@@ -369,6 +360,31 @@
     </div>
   </div>
   {{/if}}
+
+<div class="rsvp-bar" id="rsvpBar">
+  <div class="rsvp-bar__inner" role="group" aria-label="Attendance controls">
+    {{#if editingEnabled}}
+      {{#unless noMoreSpots}}
+        <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{t "views.event.addattendee" }}</button>
+      {{/unless}}
+    {{else}}
+      {{#if viewerRegistered}}
+        <span class="rsvp-bar__status">
+          {{#if viewerRegisteredUnapproved}}
+            <i class="fas fa-clock"></i> {{t "views.event.pendingapproval" }}
+          {{else}}
+            <i class="fas fa-check-circle"></i> {{t "views.event.youaregoing" }}
+          {{/if}}
+        </span>
+        <button type="button" id="unattendEvent" class="button button--secondary" data-toggle="modal" data-target="#unattendModal"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
+      {{else}}
+        {{#unless noMoreSpots}}
+          <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
+        {{/unless}}
+      {{/if}}
+    {{/if}}
+  </div>
+</div>
 {{/if}}
 
 
