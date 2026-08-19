@@ -76,6 +76,11 @@ describe("RSVP Decline", () => {
     // Dismiss the confirmation modal before interacting with the page
     // behind it - its backdrop blocks clicks until closed.
     cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+    // Bootstrap only moves focus onto the modal once its fade-in
+    // transition truly completes (same signal #attendModal/#declineModal
+    // tests already wait on) - clicking close before then hits Bootstrap's
+    // _isTransitioning guard and silently no-ops the hide.
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("have.focus");
     cy.get("#rsvpConfirmModal .close").click();
     // Bootstrap's modal close is a CSS fade transition - the modal (and its
     // click-blocking backdrop) is still display:block for a moment after
@@ -89,6 +94,11 @@ describe("RSVP Decline", () => {
     // Switch to declined
     cy.get("button#declineExisting").click();
     cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+    // Bootstrap only moves focus onto the modal once its fade-in
+    // transition truly completes (same signal #attendModal/#declineModal
+    // tests already wait on) - clicking close before then hits Bootstrap's
+    // _isTransitioning guard and silently no-ops the hide.
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("have.focus");
     cy.get("#rsvpConfirmModal .close").click();
     // Bootstrap's modal close is a CSS fade transition - the modal (and its
     // click-blocking backdrop) is still display:block for a moment after
@@ -133,6 +143,11 @@ describe("RSVP Decline", () => {
     cy.get("form#declineEventForm").submit();
 
     cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+    // Bootstrap only moves focus onto the modal once its fade-in
+    // transition truly completes (same signal #attendModal/#declineModal
+    // tests already wait on) - clicking close before then hits Bootstrap's
+    // _isTransitioning guard and silently no-ops the hide.
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("have.focus");
     cy.get("#rsvpConfirmModal .close").click();
     // Bootstrap's modal close is a CSS fade transition - the modal (and its
     // click-blocking backdrop) is still display:block for a moment after
