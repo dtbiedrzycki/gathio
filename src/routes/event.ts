@@ -898,23 +898,30 @@ router.get(
       }),
       confirmButtonLabel: i18next.t("views.rsvpconfirm.erasebutton"),
       formAction: `/event/${event.id}/erase/${req.params.removalPasswordHash}`,
+      // The confirm page's HTML <form> can only submit GET/POST, but
+      // erasure is a deletion, so once JS is confirmed available (this is
+      // a normal webpage the email link navigates to, not the email body
+      // itself - mail clients strip <script> from email HTML, not from
+      // pages their links point to) it uses axios.delete() for the
+      // correct verb instead of a plain form POST.
+      useAxiosDelete: true,
     });
   },
 );
 
-router.post(
+router.delete(
   "/event/:eventID/erase/:removalPasswordHash",
   async (req: Request, res: Response) => {
     const event = await Event.findOne({ id: req.params.eventID });
     if (!event) {
-      return res.redirect("/404");
+      return res.status(404).json({ error: "Event not found." });
     }
     const attendee = event.attendees?.find(
       (o) =>
         hashString(o.removalPassword || "") === req.params.removalPasswordHash,
     );
     if (!attendee) {
-      return res.redirect(`/${req.params.eventID}`);
+      return res.status(404).json({ error: "Attendee not found." });
     }
     const attendeeEmail = attendee.email;
     await Event.updateOne(
@@ -936,7 +943,7 @@ router.post(
       "success",
       `Attendee erased self from event ${req.params.eventID} via one-click link`,
     );
-    return res.redirect(`/${req.params.eventID}`);
+    return res.sendStatus(200);
   },
 );
 

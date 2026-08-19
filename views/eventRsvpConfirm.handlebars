@@ -5,11 +5,30 @@
     <div class="alert alert-warning" role="alert">{{message}}</div>
   {{else}}
     <p>{{confirmDescription}}</p>
-    <form id="rsvpConfirmForm" action="{{formAction}}" method="post">
+    {{#if useAxiosDelete}}
       <div class="form-group text-center">
-        <button type="submit" id="rsvpConfirmButton" class="button button--danger">{{confirmButtonLabel}}</button>
+        <button type="button" id="rsvpConfirmButton" class="button button--danger">{{confirmButtonLabel}}</button>
       </div>
-    </form>
+      <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+      <script>
+        document.getElementById('rsvpConfirmButton').addEventListener('click', function () {
+          axios.delete('{{{formAction}}}')
+            .then(function () {
+              window.location.href = '/{{eventID}}';
+            })
+            .catch(function (error) {
+              console.error(error);
+              alert('Something went wrong. Please try again.');
+            });
+        });
+      </script>
+    {{else}}
+      <form id="rsvpConfirmForm" action="{{formAction}}" method="post">
+        <div class="form-group text-center">
+          <button type="submit" id="rsvpConfirmButton" class="button button--danger">{{confirmButtonLabel}}</button>
+        </div>
+      </form>
+    {{/if}}
   {{/if}}
   <p><a href="/{{eventID}}">{{t "views.eventanswers.backtoevent" }}</a></p>
 </main>
