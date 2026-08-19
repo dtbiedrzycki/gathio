@@ -845,6 +845,7 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     attendeeNumber,
     attendeeVisible,
     attendeeStatus,
+    fullForm,
   } = req.body;
 
   const targetStatus: "attending" | "declined" =
@@ -941,12 +942,11 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     attendee.email =
       attendeeEmail !== undefined ? attendeeEmail : attendee.email;
     attendee.number = effectiveNumber;
-    attendee.visibility =
-      attendeeVisible !== undefined
-        ? attendeeVisible
-          ? "public"
-          : "private"
-        : attendee.visibility || "public";
+    attendee.visibility = fullForm
+      ? attendeeVisible
+        ? "public"
+        : "private"
+      : attendee.visibility || "public";
     attendee.answers = answers;
 
     // Auto-approve if host is adding, or if event doesn't require approval
@@ -1003,8 +1003,9 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     }
 
     // Notify the host of the new RSVP, unless they added the attendee
-    // themselves
-    if (!isHostAdding) {
+    // themselves, or this is just a one-click toggle back to attending
+    // (no attendeeName present) rather than a genuinely new RSVP.
+    if (!isHostAdding && attendeeName) {
       await notifyHostOfNewAttendee({
         emailService: req.emailService,
         event,

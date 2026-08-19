@@ -290,6 +290,7 @@
         </button>
       </div>
       <form id="attendEventForm" action="/event/{{eventData.id}}/attendee" method="post">
+        <input type="hidden" name="fullForm" value="1">
         {{#if editingEnabled}}
         <input type="hidden" name="editToken" value="{{eventData.editToken}}">
         {{/if}}
@@ -790,7 +791,7 @@ window.eventData = {{{ json jsonData }}};
       $(this).html('<i class="fas fa-copy"></i> {{t "common.copied" }}');
       setTimeout(function(){ $("#copyAPLink").html('<i class="fas fa-copy"></i> {{t "common.copy" }}');}, 5000);
     })
-    $('#attendEvent').on('click', function(event) {
+    $('#attendEvent').on('click', function() {
       const modal = $('#attendModal');
       const eventID = $(this).attr('data-event-id');
       axios.post('/attendee/provision', {}, { params: { eventID }})
@@ -816,7 +817,7 @@ window.eventData = {{{ json jsonData }}};
           return false;
         });
     });
-    $('#declineEvent').on('click', function(event) {
+    $('#declineEvent').on('click', function() {
       const modal = $('#declineModal');
       const eventID = $(this).attr('data-event-id');
       axios.post('/attendee/provision', {}, { params: { eventID }})
@@ -850,7 +851,8 @@ window.eventData = {{{ json jsonData }}};
         })
         .catch((error) => {
           console.error(error);
-          alert('Failed to update your RSVP');
+          const message = error.response?.data?.error || 'Failed to update your RSVP';
+          alert(message);
         });
     }
 

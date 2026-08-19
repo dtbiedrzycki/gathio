@@ -549,11 +549,11 @@ router.get("/:eventID", async (req: Request, res: Response) => {
     }[] = editingEnabled
       ? ((event.attendees as AttendeeLite[] | undefined) || [])
           .filter((a) => a.status === "declined")
-          .sort((a, b) => a.name.localeCompare(b.name))
+          .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
           .map((a) => ({
             id: (a._id || a.id) as string,
             name: a.name,
-            avatarLetter: a.name.charAt(0).toUpperCase(),
+            avatarLetter: (a.name || "").charAt(0).toUpperCase(),
             avatarColor: stringToColor(a.name),
           }))
       : [];
