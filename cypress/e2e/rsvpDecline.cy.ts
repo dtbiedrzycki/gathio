@@ -121,7 +121,7 @@ describe("RSVP Decline", () => {
     cy.get(".attendeesList li").should("have.length", 1);
   });
 
-  it("does not count a decline against capacity", function () {
+  it("does not count a decline against capacity when the viewer was never attending", function () {
     visitFresh(`/${this.eventID}`);
 
     cy.get("button#declineEvent").click();
