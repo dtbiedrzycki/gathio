@@ -822,6 +822,7 @@ router.get(
         templateData: {
           eventID: req.params.eventID,
           eventName: event.name,
+          removalPassword: attendee.removalPassword,
         },
       });
     }
