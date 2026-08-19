@@ -356,6 +356,10 @@ describe("Events", () => {
             win.localStorage.clear();
           },
         });
+        // The one-click link only lands on a confirmation page (GET must
+        // stay side-effect-free, e.g. for email link-prefetch scanners) -
+        // the actual decline happens on the confirm button's POST.
+        cy.get("button#rsvpConfirmButton").click();
         cy.url().should("include", `?p=`);
         cy.get(".rsvp-bar__status").should(
           "contain.text",

@@ -1,0 +1,15 @@
+<main class="page">
+  <h2 class="mb-4">{{confirmTitle}}</h2>
+
+  {{#if message}}
+    <div class="alert alert-warning" role="alert">{{message}}</div>
+  {{else}}
+    <p>{{confirmDescription}}</p>
+    <form id="rsvpConfirmForm" action="{{formAction}}" method="post">
+      <div class="form-group text-center">
+        <button type="submit" id="rsvpConfirmButton" class="button button--danger">{{confirmButtonLabel}}</button>
+      </div>
+    </form>
+  {{/if}}
+  <p><a href="/{{eventID}}">{{t "views.eventanswers.backtoevent" }}</a></p>
+</main>

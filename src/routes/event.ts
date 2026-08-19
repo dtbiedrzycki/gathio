@@ -793,8 +793,41 @@ router.delete(
   },
 );
 
-// Used to one-click unattend an event from an email.
+// One-click links from email are GET requests, which mail clients and
+// security scanners (Microsoft Defender Safe Links, Gmail's link proxy,
+// corporate mail gateways) routinely prefetch to scan for malware - a GET
+// that mutates data would fire on that prefetch, before the recipient ever
+// clicks anything. So the GET here only renders a confirmation page; the
+// actual decline happens on the POST the page's own button submits.
 router.get(
+  "/event/:eventID/unattend/:removalPasswordHash",
+  async (req: Request, res: Response) => {
+    const event = await Event.findOne({ id: req.params.eventID });
+    if (!event) {
+      return res.redirect("/404");
+    }
+    const attendee = event.attendees?.find(
+      (o) =>
+        hashString(o.removalPassword || "") === req.params.removalPasswordHash,
+    );
+    if (!attendee) {
+      return res.redirect(`/${req.params.eventID}`);
+    }
+    return res.render("eventRsvpConfirm", {
+      ...frontendConfig(res),
+      title: event.name,
+      eventID: event.id,
+      confirmTitle: i18next.t("views.rsvpconfirm.declinetitle"),
+      confirmDescription: i18next.t("views.rsvpconfirm.declinedesc", {
+        eventName: event.name,
+      }),
+      confirmButtonLabel: i18next.t("views.rsvpconfirm.declinebutton"),
+      formAction: `/event/${event.id}/unattend/${req.params.removalPasswordHash}`,
+    });
+  },
+);
+
+router.post(
   "/event/:eventID/unattend/:removalPasswordHash",
   async (req: Request, res: Response) => {
     // Find the attendee by the unattendPasswordHash
@@ -839,7 +872,37 @@ router.get(
 
 // One-click full data erasure from an email, as opposed to the unattend
 // link above which only declines. Removes the attendee record entirely.
+// Same GET-renders-confirmation / POST-mutates split as the unattend
+// route above, for the same reason (GET must stay safe to prefetch).
 router.get(
+  "/event/:eventID/erase/:removalPasswordHash",
+  async (req: Request, res: Response) => {
+    const event = await Event.findOne({ id: req.params.eventID });
+    if (!event) {
+      return res.redirect("/404");
+    }
+    const attendee = event.attendees?.find(
+      (o) =>
+        hashString(o.removalPassword || "") === req.params.removalPasswordHash,
+    );
+    if (!attendee) {
+      return res.redirect(`/${req.params.eventID}`);
+    }
+    return res.render("eventRsvpConfirm", {
+      ...frontendConfig(res),
+      title: event.name,
+      eventID: event.id,
+      confirmTitle: i18next.t("views.rsvpconfirm.erasetitle"),
+      confirmDescription: i18next.t("views.rsvpconfirm.erasedesc", {
+        eventName: event.name,
+      }),
+      confirmButtonLabel: i18next.t("views.rsvpconfirm.erasebutton"),
+      formAction: `/event/${event.id}/erase/${req.params.removalPasswordHash}`,
+    });
+  },
+);
+
+router.post(
   "/event/:eventID/erase/:removalPasswordHash",
   async (req: Request, res: Response) => {
     const event = await Event.findOne({ id: req.params.eventID });
