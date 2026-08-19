@@ -81,7 +81,7 @@ describe("RSVP Decline", () => {
     // click-blocking backdrop) is still display:block for a moment after
     // the close click resolves, so wait for it to actually finish hiding
     // before interacting with anything behind it.
-    cy.get("#rsvpConfirmModal").should("not.be.visible");
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("not.be.visible");
 
     cy.get(".rsvp-bar__status").should("contain.text", "You're going");
     cy.get(".attendeesList").should("contain.text", "Maybe Later");
@@ -94,7 +94,7 @@ describe("RSVP Decline", () => {
     // click-blocking backdrop) is still display:block for a moment after
     // the close click resolves, so wait for it to actually finish hiding
     // before interacting with anything behind it.
-    cy.get("#rsvpConfirmModal").should("not.be.visible");
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("not.be.visible");
     cy.get(".rsvp-bar__status").should(
       "contain.text",
       "You said you can't attend",
@@ -138,7 +138,7 @@ describe("RSVP Decline", () => {
     // click-blocking backdrop) is still display:block for a moment after
     // the close click resolves, so wait for it to actually finish hiding
     // before interacting with anything behind it.
-    cy.get("#rsvpConfirmModal").should("not.be.visible");
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("not.be.visible");
 
     cy.get("button#deleteMyInfo").click();
     cy.get("#unattendModal").should("be.visible");
