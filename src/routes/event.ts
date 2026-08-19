@@ -865,7 +865,7 @@ router.post(
       `Attendee declined event ${req.params.eventID} via one-click link`,
     );
     return res.redirect(
-      `/${req.params.eventID}?p=${encodeURIComponent(attendee.removalPassword || "")}`,
+      `/${req.params.eventID}?p=${encodeURIComponent(attendee.removalPassword || "")}&m=rsvpdeclined`,
     );
   },
 );
@@ -1006,7 +1006,7 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
         return res.redirect(`/${req.params.eventID}?e=${editToken}`);
       }
       return res.redirect(
-        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}`,
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpdeclined`,
       );
     }
 
@@ -1138,7 +1138,7 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     } else {
       // No approval needed - just redirect with ?p
       return res.redirect(
-        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}`,
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpgoing`,
       );
     }
   } catch (e) {

@@ -351,7 +351,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form id="unattendEventForm" x-on:submit.prevent="fetch(`/event/attendee/{{eventData.id}}?${new URLSearchParams({ p: password }).toString()}`, { method: 'DELETE' }).then(response => response.ok ? window.location.reload() : response.json()).then(data => message = data)">
+      <form id="unattendEventForm" x-on:submit.prevent="fetch(`/event/attendee/{{eventData.id}}?${new URLSearchParams({ p: password }).toString()}`, { method: 'DELETE' }).then(response => response.ok ? window.location.href = '/{{eventData.id}}?m=rsvperased' : response.json().then(data => message = data))">
       <div class="modal-body">
         <div class="form-group">
           <label for="removalPassword" class="form-label">{{t "views.event.removepswd" }}</label>
@@ -547,37 +547,7 @@
 </div>
 {{/if}}
 
-<div class="modal fade" id="rsvpSuccessModal" tabindex="-1" role="dialog" aria-labelledby="rsvpSuccessModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="rsvpSuccessModalLabel"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-warning">
-          <i class="fas fa-exclamation-triangle"></i>
-          <strong>{{t "views.event.saveyourlink" }}</strong>
-        </div>
-        <p id="rsvpModalDescription"></p>
-        <div class="form-group">
-          <label for="rsvpSecretLink">{{t "views.event.yoursecretlink" }}</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="rsvpSecretLink" readonly>
-            <div class="input-group-append">
-              <button class="button button--secondary" type="button" id="copyRsvpLink"><i class="fas fa-copy"></i> {{t "common.copy" }}</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="button button--primary" data-dismiss="modal">{{t "views.event.savedlink" }}</button>
-      </div>
-    </div>
-  </div>
-</div>
+{{> rsvpConfirmModal }}
 
 <div class="modal fade" id="editTokenModal" tabindex="-1" role="dialog" aria-labelledby="editTokenModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -734,16 +704,17 @@ window.eventData = {{{ json jsonData }}};
       history.replaceState(history.state, '', url.href);
     }
 
-    if (urlParams.has('m')) {
-      const messageType = urlParams.get('m');
-      if (messageType === 'rsvppending') {
-        // Show the save link modal for pending RSVPs (approval-required events only)
+    // Reusable dismissable confirmation modal (views/partials/rsvpConfirmModal.handlebars),
+    // shown after any RSVP state change via the ?m= query param. showSecretLink
+    // is only needed for the pending-approval case, where losing the link means
+    // losing the only way back to the RSVP.
+    function showRsvpConfirmModal({ title, description, showSecretLink }) {
+      $('#rsvpConfirmModalLabel').text(title);
+      $('#rsvpConfirmModalDescription').html(description);
+      if (showSecretLink) {
         const secretLink = window.location.origin + window.location.pathname + '?p=' + urlParams.get('p');
         $('#rsvpSecretLink').val(secretLink);
-        $('#rsvpSuccessModalLabel').text("{{t 'views.event.rsvppending' }}");
-        $('#rsvpModalDescription').text("{{{t 'views.event.rsvppendingdesc' }}}");
-
-        $('#rsvpSuccessModal').modal('show');
+        $('#rsvpConfirmModalSecretLink').show();
         new ClipboardJS('#copyRsvpLink', {
           target: function() {
             return document.getElementById('rsvpSecretLink');
@@ -755,6 +726,39 @@ window.eventData = {{{ json jsonData }}};
             $(this).html('<i class="fas fa-copy"></i> {{t "common.copy" }}');
           }, 3000);
         });
+      } else {
+        $('#rsvpConfirmModalSecretLink').hide();
+      }
+      $('#rsvpConfirmModal').modal('show');
+    }
+
+    const rsvpConfirmMessages = {
+      rsvpgoing: {
+        title: "{{t 'views.event.rsvpgoing' }}",
+        description: "{{{t 'views.event.rsvpgoingdesc' }}}",
+        showSecretLink: false,
+      },
+      rsvpdeclined: {
+        title: "{{t 'views.event.rsvpdeclinedtitle' }}",
+        description: "{{{t 'views.event.rsvpdeclineddesc' }}}",
+        showSecretLink: false,
+      },
+      rsvperased: {
+        title: "{{t 'views.event.rsvperasedtitle' }}",
+        description: "{{{t 'views.event.rsvperaseddesc' }}}",
+        showSecretLink: false,
+      },
+      rsvppending: {
+        title: "{{t 'views.event.rsvppending' }}",
+        description: "{{{t 'views.event.rsvppendingdesc' }}}",
+        showSecretLink: true,
+      },
+    };
+
+    if (urlParams.has('m')) {
+      const messageType = urlParams.get('m');
+      if (rsvpConfirmMessages[messageType]) {
+        showRsvpConfirmModal(rsvpConfirmMessages[messageType]);
       }
       url.searchParams.delete('m');
       history.replaceState(history.state, '', url.href);

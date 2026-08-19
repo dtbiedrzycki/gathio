@@ -14,7 +14,7 @@
         document.getElementById('rsvpConfirmButton').addEventListener('click', function () {
           axios.delete('{{{formAction}}}')
             .then(function () {
-              window.location.href = '/{{eventID}}';
+              window.location.href = '/{{eventID}}?m=rsvperased';
             })
             .catch(function (error) {
               console.error(error);

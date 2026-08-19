@@ -73,11 +73,18 @@ describe("RSVP Decline", () => {
     cy.get("#attendeeName").type("Maybe Later");
     cy.get("form#attendEventForm").submit();
 
+    // Dismiss the confirmation modal before interacting with the page
+    // behind it - its backdrop blocks clicks until closed.
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+    cy.get("#rsvpConfirmModal .close").click();
+
     cy.get(".rsvp-bar__status").should("contain.text", "You're going");
     cy.get(".attendeesList").should("contain.text", "Maybe Later");
 
     // Switch to declined
     cy.get("button#declineExisting").click();
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+    cy.get("#rsvpConfirmModal .close").click();
     cy.get(".rsvp-bar__status").should(
       "contain.text",
       "You said you can't attend",
@@ -114,6 +121,9 @@ describe("RSVP Decline", () => {
     cy.get("#declineModal").should("have.focus");
     cy.get("#declineAttendeeName").type("Cannot Come");
     cy.get("form#declineEventForm").submit();
+
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+    cy.get("#rsvpConfirmModal .close").click();
 
     cy.get("button#deleteMyInfo").click();
     cy.get("#unattendModal").should("be.visible");
