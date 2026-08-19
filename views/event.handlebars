@@ -434,7 +434,11 @@
         <span class="rsvp-bar__status">
           <i class="fas fa-times-circle"></i> {{t "views.event.youdeclined" }}
         </span>
-        <button type="button" id="reattendEvent" class="button button--primary"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
+        <form id="reattendEventForm" action="/event/{{eventData.id}}/attendee" method="post" style="display:inline;">
+          <input type="hidden" name="removalPassword" id="reattendRemovalPassword">
+          <input type="hidden" name="attendeeStatus" value="attending">
+          <button type="submit" id="reattendEvent" class="button button--primary"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
+        </form>
         <button type="button" id="deleteMyInfo" class="button button--outline-secondary button--sm" data-toggle="modal" data-target="#unattendModal">{{t "views.event.deletemyinfo" }}</button>
       {{else}}
         {{#if viewerRegistered}}
@@ -445,7 +449,11 @@
               <i class="fas fa-check-circle"></i> {{t "views.event.youaregoing" }}
             {{/if}}
           </span>
-          <button type="button" id="declineExisting" class="button button--secondary"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
+          <form id="declineExistingForm" action="/event/{{eventData.id}}/attendee" method="post" style="display:inline;">
+            <input type="hidden" name="removalPassword" id="declineExistingRemovalPassword">
+            <input type="hidden" name="attendeeStatus" value="declined">
+            <button type="submit" id="declineExisting" class="button button--secondary"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
+          </form>
         {{else}}
           {{#unless noMoreSpots}}
             <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
@@ -837,36 +845,17 @@ window.eventData = {{{ json jsonData }}};
         });
     });
 
-    function toggleRsvpStatus(targetStatus) {
-      const eventID = $('#eventName').attr('data-event-id');
+    // Toggling attending<->declined is a real form submit (not a JS
+    // fetch+reload) so the browser handles the navigation natively -
+    // JS-triggered location.reload()/replace() proved unreliable to
+    // detect in automated-browser environments. The removalPassword
+    // lives in the ?p= query param, not in the DOM, so it's copied into
+    // each form's hidden field synchronously on page load.
+    (function populateToggleFormPasswords(){
       const removalPassword = new URLSearchParams(window.location.search).get('p');
-      if (!removalPassword) {
-        console.error('No removal password found for RSVP toggle');
-        alert('Failed to update your RSVP');
-        return;
-      }
-      axios.post(`/event/${eventID}/attendee`, { removalPassword, attendeeStatus: targetStatus })
-        .then(() => {
-          // location.reload() to the exact same URL is unreliable in some
-          // automated-browser environments (the navigation can complete
-          // without the load event Cypress waits on ever firing); replace()
-          // forces a real navigation that's reliably detected.
-          window.location.replace(window.location.href);
-        })
-        .catch((error) => {
-          console.error(error);
-          const message = error.response?.data?.error || 'Failed to update your RSVP';
-          alert(message);
-        });
-    }
-
-    $('#declineExisting').on('click', function() {
-      toggleRsvpStatus('declined');
-    });
-
-    $('#reattendEvent').on('click', function() {
-      toggleRsvpStatus('attending');
-    });
+      if (!removalPassword) return;
+      $('#reattendRemovalPassword, #declineExistingRemovalPassword').val(removalPassword);
+    })();
 
       $('#verifyTokenForm').on('submit', function(e) {
         e.preventDefault();

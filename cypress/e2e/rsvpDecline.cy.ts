@@ -45,6 +45,7 @@ describe("RSVP Decline", () => {
 
     cy.get("button#declineEvent").click();
     cy.get("#declineModal").should("be.visible");
+    cy.get("#declineModal").should("have.focus");
     cy.get("#declineAttendeeName").type("Cannot Come");
     cy.get("form#declineEventForm").submit();
 
@@ -98,6 +99,7 @@ describe("RSVP Decline", () => {
 
     cy.get("button#declineEvent").click();
     cy.get("#declineModal").should("be.visible");
+    cy.get("#declineModal").should("have.focus");
     cy.get("#declineAttendeeName").type("Cannot Come");
     cy.get("form#declineEventForm").submit();
 
@@ -109,6 +111,7 @@ describe("RSVP Decline", () => {
 
     cy.get("button#declineEvent").click();
     cy.get("#declineModal").should("be.visible");
+    cy.get("#declineModal").should("have.focus");
     cy.get("#declineAttendeeName").type("Cannot Come");
     cy.get("form#declineEventForm").submit();
 
