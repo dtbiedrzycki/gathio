@@ -327,7 +327,7 @@ describe("Events", () => {
     cy.get("#event-group").should("contain.text", "Test Group");
   });
 
-  it("removes you from the event with a one-click unattend link", function () {
+  it("declines your RSVP via a one-click unattend link", function () {
     cy.get("button#attendEvent").click();
     cy.get("#attendModal").should("be.visible");
     cy.get("#attendModal").should("have.focus");
