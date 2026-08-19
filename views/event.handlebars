@@ -431,7 +431,7 @@
       {{/unless}}
     {{else}}
       {{#if viewerDeclined}}
-        <span class="rsvp-bar__status">
+        <span class="rsvp-bar__status rsvp-bar__status--declined">
           <i class="fas fa-times-circle"></i> {{t "views.event.youdeclined" }}
         </span>
         <form id="reattendEventForm" action="/event/{{eventData.id}}/attendee" method="post" style="display:inline;">

@@ -876,6 +876,10 @@ li.hidden-attendee .attendee-name {
   color: #28a745;
 }
 
+.rsvp-bar__status--declined {
+  color: #dc3545;
+}
+
 @media (max-width: 1199.98px) {
   .edit-buttons {
     text-align: left;
