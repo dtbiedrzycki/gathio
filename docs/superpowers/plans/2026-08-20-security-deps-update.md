@@ -705,7 +705,108 @@ EOF
 
 ---
 
-### Task 9: Re-run the full `pnpm audit` and confirm the remaining findings are only `mongoose`, `ical>request`, `jimp`'s `file-type`/`min-document`, and dev-only
+### Task 9: Fix `express-handlebars`'s minimatch chain and reclassify `wait-on`
+
+**Files:**
+
+- Modify: `package.json` (move the `wait-on` line from `dependencies` to `devDependencies`)
+- Modify: `pnpm-workspace.yaml` (add one scoped override to the existing `overrides:` block)
+- Modify: `pnpm-lock.yaml`
+
+**Interfaces:**
+
+- Consumes: nothing from other tasks.
+- Produces: nothing consumed by later tasks.
+
+**Why this task exists:** the controller's first pass at Task 9's audit-check (originally the next task, now Task 10) — run early, before dispatching an implementer, the same way Task 8 was discovered — surfaced two more production-reachable, non-dev findings the original review missed:
+
+1. **`minimatch`/`brace-expansion` (high, ReDoS)** via `express-handlebars>glob>minimatch@5.1.6` — `express-handlebars` is a direct production dependency (the Handlebars view engine). The patched floor for this line is `minimatch >=5.1.8`. A blanket `minimatch` override would also touch three dev-only chains (`eslint`/`nodemon`'s `minimatch@3.1.2`, `typescript-eslint`'s `minimatch@9.0.5`) which expect different majors — a blanket bump risks breaking those tools' internal API assumptions. Use pnpm's scoped override syntax (`"parent>child": "version"`) to target only the `express-handlebars>glob>minimatch` path.
+2. **`lodash`/`joi` (high/moderate)** via `wait-on>lodash` and `wait-on>joi` — `wait-on` is declared in `package.json`'s `dependencies`, but it's only ever invoked as a CLI tool in the `test`/`test:dev` npm scripts (`wait-on http://localhost:3000`), never imported anywhere in `src/`. It's dev/test tooling that was mis-classified. Moving it to `devDependencies` is the correct fix (not a version bump — `wait-on@^7.2.0`'s own `lodash`/`joi` pins are what they are; reclassifying just means a `--prod`-only install correctly excludes them, and `pnpm audit`'s dev/non-dev split reflects reality).
+
+Two adjacent findings were investigated and confirmed already covered by an existing accepted-risk umbrella — do not re-address them here:
+
+- `ajv`/`qs`/`uuid` (moderate) all resolve via paths rooted at `ical>request>...` — the same unmaintained `request` package Task 8/9's accepted-risk note already covers. `ical`'s whole legacy dependency tree is the accepted risk, not just the `request` package name itself.
+- `@babel/runtime` (moderate, ReDoS in transpiled regex code) via the `i18next`/`jimp` chains — left out of scope alongside the Low-severity findings (`cookie`, `on-headers`, `@tootallnate/once`) this plan never targeted; the original review's stated goal was Critical/High production-reachable findings, and this is a deep transitive Moderate with very low practical exploitability in a server that doesn't process attacker-controlled named capture groups through Babel at runtime.
+
+- [ ] **Step 1: Confirm wait-on is genuinely dev/test-only**
+
+Run:
+
+```bash
+grep -n "wait-on" package.json src -r 2>/dev/null
+```
+
+Expected: matches only in `package.json`'s `scripts` block (`test`/`test:dev`) and its `dependencies` line — no matches under `src/`. If you find an import of `wait-on` anywhere in `src/`, stop and report BLOCKED — the reclassification premise is wrong.
+
+- [ ] **Step 2: Move wait-on to devDependencies**
+
+Edit `package.json`: delete the line `"wait-on": "^7.2.0",` from the `dependencies` block, and add `"wait-on": "^7.2.0",` to the `devDependencies` block (keep alphabetical order consistent with the surrounding entries in each block).
+
+- [ ] **Step 3: Add the scoped minimatch override**
+
+Edit `pnpm-workspace.yaml`. The `overrides:` block already exists (Tasks 6 and 8 added to it) — add one more line:
+
+```yaml
+overrides:
+  form-data: ^4.0.6
+  axios: ^1.18.0
+  postcss: ^8.5.18
+  ts-deepmerge: ^8.0.0
+  tough-cookie: ^4.1.3
+  phin: ^3.7.1
+  ws: ^8.21.0
+  express-handlebars>glob>minimatch: ^5.1.8
+```
+
+- [ ] **Step 4: Reinstall and confirm resolution**
+
+Run:
+
+```bash
+pnpm install --store-dir="$TMPDIR/pnpm-store"
+pnpm why minimatch brace-expansion wait-on lodash joi --store-dir="$TMPDIR/pnpm-store" 2>&1 | head -60
+```
+
+Expected: the `express-handlebars>glob>minimatch` line now resolves to `5.1.8` or above, with a patched `brace-expansion` alongside it (minimatch 5.1.8 should pull a fixed brace-expansion on its own — if it doesn't, that's worth noting but is a Minor gap, not a blocker, since the brace-expansion advisories at that specific version combination may already be resolved by the minimatch bump). The `eslint`/`nodemon` (`minimatch@3.1.2`) and `typescript-eslint` (`minimatch@9.0.5`) dev-only chains should be untouched by the scoped override. `wait-on` should now show up rooted at `gathio (devDependencies)` instead of `gathio (dependencies)`, and its `lodash`/`joi` dependents should now report as dev-only findings in a subsequent audit run (not eliminated, just correctly classified).
+
+- [ ] **Step 5: Build**
+
+Run: `pnpm build`
+Expected: exits 0. Moving `wait-on` to devDependencies shouldn't affect `tsc` at all (it was never imported by `src/`), and the minimatch override shouldn't affect anything Handlebars-related at the TypeScript level (it's a build-tool-internal dependency of `express-handlebars`, not part of its public API surface).
+
+- [ ] **Step 6: Lint**
+
+Run: `pnpm lint`
+Expected: exits 0, modulo the same 3 pre-existing unrelated files noted in every prior task.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add package.json pnpm-workspace.yaml pnpm-lock.yaml
+git -c gpg.format=ssh \
+    -c user.signingkey=~/.ssh/<signing_key> \
+    commit -S -m "$(cat <<'EOF'
+Fix express-handlebars's minimatch ReDoS, reclassify wait-on as dev
+
+express-handlebars>glob pulls minimatch@5.1.6 (high-severity ReDoS,
+patched >=5.1.8) - scoped the override to that one path so it doesn't
+also force eslint/nodemon's minimatch@3.x or typescript-eslint's
+minimatch@9.x to a version their own dependency chains don't expect.
+
+wait-on was declared in dependencies but is only ever invoked as a CLI
+tool in the test/test:dev npm scripts, never imported in src/ - moving
+it to devDependencies is the correct classification and resolves the
+lodash/joi findings it was dragging into the non-dev audit surface as
+a side effect.
+
+Commit-Machine: toolbx
+EOF
+)"
+```
+
+---
+
+### Task 10: Re-run the full `pnpm audit` and confirm the remaining findings are only `mongoose`, `ical>request`, `jimp`'s `file-type`/`min-document`, and dev-only
 
 **Files:**
 
@@ -713,8 +814,8 @@ EOF
 
 **Interfaces:**
 
-- Consumes: the cumulative state of `package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml` from Tasks 1–8.
-- Produces: the final findings list for the PR description in Task 10.
+- Consumes: the cumulative state of `package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml` from Tasks 1–9.
+- Produces: the final findings list for the PR description in Task 11.
 
 - [ ] **Step 1: Run the full audit**
 
@@ -745,15 +846,15 @@ Expected: every remaining non-dev finding has `module_name` equal to one of:
 - `request` with a path rooted at `ical>request` (accepted risk, Global Constraints — unmaintained package, no real fix exists)
 - `file-type` or `min-document` with a path rooted at `jimp` (accepted risk, added by Task 8's investigation — needs a `jimp` major-version upgrade)
 
-Every other non-dev finding — from the original review (handlebars, i18next-fs-backend, i18next-http-middleware, form-data, nanoid, dompurify, sanitize-html, nodemailer's high finding if Task 7 found a fix, express's path-to-regexp/body-parser chain, axios, postcss, ts-deepmerge, tough-cookie, phin) or from Task 8's discovery (validator, lodash via express-validator, ws, i18next-http-backend) — should be gone.
+Every other non-dev finding — from the original review (handlebars, i18next-fs-backend, i18next-http-middleware, form-data, nanoid, dompurify, sanitize-html, nodemailer's high finding if Task 7 found a fix, express's path-to-regexp/body-parser chain, axios, postcss, ts-deepmerge, tough-cookie, phin), from Task 8's discovery (validator, lodash via express-validator, ws, i18next-http-backend), or from Task 9's discovery (minimatch/brace-expansion via express-handlebars>glob, lodash/joi via wait-on) — should be gone (the `wait-on`-rooted `lodash`/`joi` findings should now report `dev: true` rather than being absent, since Task 9 reclassified rather than removed `wait-on`).
 
-If anything unexpected remains (a non-dev finding outside the three accepted-risk categories above), stop and investigate — either an override/removal didn't resolve correctly (check `pnpm why <pkg>`) or a new advisory was published since the review. Do not proceed to Task 10 with an unexplained finding.
+If anything unexpected remains (a non-dev finding outside the three accepted-risk categories above), stop and investigate — either an override/removal didn't resolve correctly (check `pnpm why <pkg>`) or a new advisory was published since the review. Do not proceed to Task 11 with an unexplained finding.
 
-- [ ] **Step 3: No commit** — this is a verification checkpoint, not a code change. Proceed to Task 10 with the confirmed final findings list in hand.
+- [ ] **Step 3: No commit** — this is a verification checkpoint, not a code change. Proceed to Task 11 with the confirmed final findings list in hand.
 
 ---
 
-### Task 10: Full Cypress suite and PR
+### Task 11: Full Cypress suite and PR
 
 **Files:**
 
@@ -761,7 +862,7 @@ If anything unexpected remains (a non-dev finding outside the three accepted-ris
 
 **Interfaces:**
 
-- Consumes: the complete set of commits from Tasks 1–8.
+- Consumes: the complete set of commits from Tasks 1–9.
 - Produces: nothing (terminal task).
 
 - [ ] **Step 1: Run the full test suite**
@@ -787,12 +888,14 @@ gh pr create --base feat/mad-customizations --title "Dependency security updates
 - Bumps @sendgrid/mail from 6.x to 8.1.6 to match the already-pinned @sendgrid/helpers@^8.0.0, which also drops the deprecated `request`/`form-data@2.x` client for the sendgrid mail path.
 - Adds overrides (in `pnpm-workspace.yaml` — pnpm 11 no longer reads `package.json`'s `pnpm` field) for form-data, axios, postcss, ts-deepmerge, tough-cookie, phin, and ws, which are pulled in transitively and can't be bumped directly.
 - Removes `express-validator` and `i18next-http-backend`, two dependencies confirmed unused anywhere in the codebase, closing their advisories (validator, lodash-via-express-validator, i18next-http-backend's own path traversal) by deleting dead weight rather than patching packages that add no value. These surfaced during the final audit re-check, not the original review — see Task 8/9 in the linked plan for the investigation.
+- Scopes a `minimatch` override to `express-handlebars>glob>minimatch` (high-severity ReDoS) without disturbing the different `minimatch` majors that `eslint`/`nodemon`/`typescript-eslint` expect, and reclassifies `wait-on` from `dependencies` to `devDependencies` (it's CLI-only test tooling, never imported in `src/`) to correctly exclude its `lodash`/`joi` dependents from the production audit surface. Also discovered during the audit re-check, not the original review.
 - <fill in nodemailer outcome from Task 7: either "Bumps nodemailer to X.Y.Z" or "Nodemailer's high-severity raw-option fix requires a major version bump (6.x -> 7.x/8.x/9.x) and is deferred to a follow-up, since EmailService's transport config needs review against the new API first.">
 
 ## Explicitly out of scope
 - mongoose stays at 5.13.22. Its critical search-injection and NoSQL-injection findings only have fixes in the 6.x line; a 5->6 migration touches every model/query in src/models and src/routes and needs its own dedicated plan.
-- The `request` package itself (pulled in only via `ical>request` after this PR) has a moderate SSRF advisory with no real fix available — it's unmaintained, last published 2.88.2, and the advisory's claimed patched floor was never released. Scoped entirely to the calendar-import feature. Replacing `ical` (e.g. with `node-ical`) is the real fix and is a separate piece of work.
+- The `request` package itself (pulled in only via `ical>request` after this PR, along with its own further-nested dependents like `ajv`/`qs`/`uuid`) has a moderate SSRF advisory with no real fix available — it's unmaintained, last published 2.88.2, and the advisory's claimed patched floor was never released. Scoped entirely to the calendar-import feature. Replacing `ical` (e.g. with `node-ical`) is the real fix and is a separate piece of work.
 - `file-type`/`min-document` (moderate/low, via `jimp`) — `jimp@0.16.13` pins `file-type@16.5.4` five majors behind the patched floor; forcing it via override risks breaking banner-image-upload type detection. Needs a `jimp` major-version upgrade as separate, tested work.
+- `@babel/runtime` (moderate, ReDoS in transpiled regex code) via `i18next`/`jimp` — left alongside the Low-severity findings (`cookie`, `on-headers`, `@tootallnate/once`) this plan never targeted; matches the original review's stated Critical/High scope, and has very low practical exploitability here.
 - Dev-only findings (eslint's minimatch/brace-expansion/js-yaml/flatted chain, cypress's extract-zip/tmp/cross-spawn, jscodeshift's @babel/core, nodemon's semver, picomatch) are untouched — never bundled into dist/, not urgent.
 
 ## Test plan
@@ -800,7 +903,7 @@ gh pr create --base feat/mad-customizations --title "Dependency security updates
 - [x] `pnpm lint` passes after each bump
 - [x] Manual smoke checks per task (language detection, sanitization round-trip, route boot, config-merge hot path, sendgrid client wiring)
 - [x] Full `pnpm test` (Cypress) passes on the final state
-- [x] Final `pnpm audit` confirms only mongoose, ical's request, jimp's file-type/min-document, and dev-only findings remain
+- [x] Final `pnpm audit` confirms only mongoose, ical's request (and its own nested dependents), jimp's file-type/min-document, and dev-only findings remain
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
