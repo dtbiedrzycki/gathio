@@ -118,3 +118,48 @@ function editEventForm() {
     },
   };
 }
+
+function inviteForm() {
+  return {
+    sending: false,
+    summary: "",
+    error: "",
+    async sendInvites() {
+      const file = this.$refs.csvUpload.files[0];
+      if (!file) {
+        this.error = "Please choose a CSV file first.";
+        this.summary = "";
+        return;
+      }
+      this.sending = true;
+      this.error = "";
+      this.summary = "";
+      const formData = new FormData();
+      formData.append("csvUpload", file);
+      try {
+        const response = await fetch(
+          `/event/${window.eventData.id}/invite?e=${window.eventData.editToken}`,
+          { method: "POST", body: formData },
+        );
+        this.sending = false;
+        const json = await response.json();
+        if (!response.ok) {
+          this.error =
+            json.errors && json.errors[0]
+              ? json.errors[0].message
+              : "Could not send invites.";
+          return;
+        }
+        this.summary = `${json.sent} invite(s) sent, ${json.skipped} skipped.`;
+        if (json.skippedReasons && json.skippedReasons.length) {
+          this.summary += ` (${json.skippedReasons.join("; ")})`;
+        }
+        this.$refs.csvUpload.value = "";
+      } catch (err) {
+        console.log(err);
+        this.sending = false;
+        this.error = "Could not send invites.";
+      }
+    },
+  };
+}
