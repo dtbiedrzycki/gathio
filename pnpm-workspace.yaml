@@ -13,3 +13,4 @@ overrides:
   phin: ^3.7.1
   ws: ^8.21.0
   glob>minimatch: ^5.1.8
+  brace-expansion: ^2.1.4
