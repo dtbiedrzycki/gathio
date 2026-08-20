@@ -21,7 +21,7 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@sendgrid/helpers": "^8.0.0",
-    "@sendgrid/mail": "^6.5.5",
+    "@sendgrid/mail": "^8.1.6",
     "activitypub-types": "^1.1.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
