@@ -11,3 +11,4 @@ overrides:
   ts-deepmerge: ^8.0.0
   tough-cookie: ^4.1.3
   phin: ^3.7.1
+  ws: ^8.21.0
