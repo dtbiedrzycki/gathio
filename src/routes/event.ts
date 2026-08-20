@@ -34,7 +34,7 @@ import {
   updateActivityPubEvent,
 } from "../activitypub.js";
 import crypto from "node:crypto";
-import ical from "ical";
+import ical, { type VEvent } from "node-ical";
 import { markdownToSanitizedHTML } from "../util/markdown.js";
 import { checkMagicLink, getConfigMiddleware } from "../lib/middleware.js";
 import { frontendConfig, getConfig } from "../lib/config.js";
@@ -751,9 +751,28 @@ router.post(
     const eventID = generateEventID();
     const editToken = generateEditToken();
 
-    const iCalObject = ical.parseICS(req.file.buffer.toString("utf8"));
+    const iCalObject = ical.sync.parseICS(req.file.buffer.toString("utf8"));
 
-    const importedEventData = iCalObject[Object.keys(iCalObject)[0]];
+    // node-ical also splits calendar-level properties (VERSION, PRODID, ...)
+    // out into a trailing `vcalendar` entry, so pick the VEVENT explicitly
+    // rather than assuming the first key.
+    const importedEventData = Object.values(iCalObject).find(
+      (component): component is VEvent => component?.type === "VEVENT",
+    );
+
+    if (!importedEventData) {
+      return res.status(400).json({
+        errors: [{ message: "No event was found in the provided file." }],
+      });
+    }
+
+    // ICS properties with parameters (e.g. SUMMARY;LANGUAGE=de:...) come back
+    // as { val, params } instead of a plain string.
+    const unwrapValue = (
+      value: { val: string } | string | undefined,
+    ): string | undefined => (typeof value === "string" ? value : value?.val);
+
+    const summary = unwrapValue(importedEventData.summary);
 
     let creatorEmail: string | undefined;
     if (req.body.creatorEmail) {
@@ -771,19 +790,19 @@ router.post(
       if (typeof importedEventData.organizer === "string") {
         hostName = importedEventData.organizer.replace(/["]+/g, "");
       } else {
-        hostName = importedEventData.organizer.params.CN.replace(/["]+/g, "");
+        hostName = importedEventData.organizer.params.CN?.replace(/["]+/g, "");
       }
     }
 
     const event = new Event({
       id: eventID,
       type: "public",
-      name: importedEventData.summary,
-      location: importedEventData.location,
+      name: summary,
+      location: unwrapValue(importedEventData.location),
       start: importedEventData.start,
       end: importedEventData.end,
       timezone: "Etc/UTC", // TODO: get timezone from ics file
-      description: importedEventData.description,
+      description: unwrapValue(importedEventData.description),
       image: "",
       creatorEmail,
       url: "",
@@ -803,7 +822,7 @@ router.post(
       if (creatorEmail) {
         req.emailService.sendEmailFromTemplate({
           to: creatorEmail,
-          subject: importedEventData.summary || "",
+          subject: summary || "",
           templateName: "createEvent",
           templateData: {
             eventID,
