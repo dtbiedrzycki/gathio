@@ -25,6 +25,7 @@
     "activitypub-types": "^1.1.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "csv-parse": "^7.0.2",
     "dompurify": "^3.1.4",
     "express": "^4.19.2",
     "express-fileupload": "^1.5.0",
