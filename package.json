@@ -16,6 +16,7 @@
   "engines": {
     "node": ">=22"
   },
+  "packageManager": "pnpm@11.22.0",
   "keywords": [],
   "author": "",
   "license": "GPL-3.0-or-later",
@@ -55,7 +56,7 @@
     "react-i18next": "^15.4.1",
     "sanitize-html": "^2.17.5",
     "toml": "^3.0.0",
-    "ts-deepmerge": "^7.0.2",
+    "ts-deepmerge": "^8.0.0",
     "typescript": "^5.4.5"
   },
   "devDependencies": {
