@@ -597,11 +597,114 @@ EOF
 )"
 ```
 
-If no same-major fix exists, skip the commit — there is nothing to commit for this task, and Task 9's summary will record the deferred major-version gap instead.
+If no same-major fix exists, skip the commit — there is nothing to commit for this task, and Task 10's summary will record the deferred major-version gap instead.
 
 ---
 
-### Task 8: Re-run the full `pnpm audit` and confirm the remaining findings are only `mongoose`, `ical>request`, and dev-only
+### Task 8: Fix production-reachable findings discovered during audit verification (`express-validator`, `i18next-http-backend`, `ws`)
+
+**Files:**
+
+- Modify: `package.json` (remove `express-validator` and `i18next-http-backend` dependency lines)
+- Modify: `pnpm-workspace.yaml` (add a `ws` entry to the `overrides` block created in Task 6)
+- Modify: `pnpm-lock.yaml`
+
+**Interfaces:**
+
+- Consumes: nothing from other tasks.
+- Produces: nothing consumed by later tasks.
+
+**Why this task exists:** Task 9 (the full audit re-check, originally numbered Task 8) is a verification gate, and running it against the state after Tasks 1–7 surfaced findings the original security review missed: `validator` (high) and `lodash` (high/moderate) via `express-validator`, `ws` (high) via `jsdom`, and `i18next-http-backend` (moderate, the same path-traversal/prototype-pollution shape as `i18next-http-middleware`, which Task 2 already fixed). Investigation (`grep -rn "express-validator" --include="*.ts" --include="*.js" .` and `grep -rn "i18next-http-backend" src/`) confirmed both `express-validator` and `i18next-http-backend` have **zero imports anywhere in the codebase** — they're dead dependencies. `jsdom` (which pulls `ws`) IS actively used, in `src/util/markdown.ts` for DOMPurify's `window` object — but only for DOM sanitization, never for anything WebSocket-related, so forcing `ws` to a patched version is safe.
+
+Two related findings were investigated and ruled **out of scope** rather than fixed here — do not attempt them in this task:
+- `file-type`/`min-document` (moderate/low) via `jimp` (used in `src/routes/group.ts` and `src/routes/event.ts` for banner image resizing): `jimp@0.16.13` pins `file-type@16.5.4` deep in its own internal chain (`@jimp/core>load-bmfont>file-type`), five major versions behind the patched floor (`>=21.3.1`). Forcing that version via override risks breaking image-type detection on banner uploads, since `file-type`'s API has changed across those majors. This needs a `jimp` major-version upgrade (0.16 -> a current major) as separate, tested work — same category as the `mongoose` and `ical` deferrals.
+- `validator`/`lodash` are fully resolved by removing `express-validator` (below) — no override needed.
+
+- [ ] **Step 1: Confirm the two dead dependencies are truly unused**
+
+Run:
+
+```bash
+grep -rn "express-validator" --include="*.ts" --include="*.js" . --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.worktrees
+grep -rn "i18next-http-backend" src/
+```
+
+Expected: both commands return no matches (already confirmed by the controller during planning — this step is you re-confirming before deleting anything, not discovering it fresh). If either command DOES find a usage, stop and report BLOCKED — the removal plan is wrong and needs to be revisited, do not delete a package that's actually imported somewhere.
+
+- [ ] **Step 2: Remove the two dead dependency lines from package.json**
+
+Edit `package.json`, delete these two lines entirely from the `dependencies` block:
+
+```json
+    "express-validator": "^6.15.0",
+    "i18next-http-backend": "^3.0.2",
+```
+
+- [ ] **Step 3: Add a `ws` override to the existing overrides block in pnpm-workspace.yaml**
+
+Edit `pnpm-workspace.yaml`. The `overrides:` block already exists (added in Task 6) — add one line to it:
+
+```yaml
+overrides:
+  form-data: ^4.0.6
+  axios: ^1.18.0
+  postcss: ^8.5.18
+  ts-deepmerge: ^8.0.0
+  tough-cookie: ^4.1.3
+  phin: ^3.7.1
+  ws: ^8.21.0
+```
+
+- [ ] **Step 4: Reinstall and confirm all three findings are resolved**
+
+Run:
+
+```bash
+pnpm install --store-dir="$TMPDIR/pnpm-store"
+pnpm why express-validator i18next-http-backend ws --store-dir="$TMPDIR/pnpm-store" 2>&1 | head -30
+```
+
+Expected: `express-validator` and `i18next-http-backend` report "No projects use..." or equivalent (fully removed from the tree — including their sub-dependents `validator` and the `express-validator`-rooted copy of `lodash`, which should also disappear if nothing else depends on them; a dev-only copy of `lodash` via `wait-on`/`cypress` is fine and expected to remain). `ws` resolves to `8.21.0` or above everywhere it appears (via `jsdom`).
+
+- [ ] **Step 5: Build**
+
+Run: `pnpm build`
+Expected: `tsc` exits 0. Since `express-validator` and `i18next-http-backend` were confirmed unused in Step 1, removing them should not produce any type errors. If `tsc` DOES report a missing-module error, that contradicts Step 1's finding — stop and report BLOCKED rather than trying to work around it, since it means the removal was wrong.
+
+- [ ] **Step 6: Lint**
+
+Run: `pnpm lint`
+Expected: exits 0, modulo the same 3 pre-existing unrelated files noted in every prior task (`cypress/e2e/rsvpDecline.cy.ts`, `docs/superpowers/plans/2026-08-20-csv-bulk-invite.md`, `docs/superpowers/specs/2026-08-20-csv-bulk-invite-design.md`).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add package.json pnpm-workspace.yaml pnpm-lock.yaml
+git -c gpg.format=ssh \
+    -c user.signingkey=~/.ssh/<signing_key> \
+    commit -S -m "$(cat <<'EOF'
+Remove unused express-validator/i18next-http-backend, override ws
+
+Confirmed via grep that neither express-validator nor
+i18next-http-backend is imported anywhere in the codebase - removing
+them closes their advisories (validator high, lodash high/moderate via
+express-validator, i18next-http-backend's own path-traversal moderate)
+by deleting dead weight rather than patching packages that add no
+value. Adds a ws override (jsdom's transitive dependency, used only
+for DOMPurify's window object, never WebSocket features) to close a
+high-severity DoS finding discovered during the Task 9 audit
+re-check. file-type/min-document via jimp's old internal file-type@16
+pin are left as an accepted risk requiring a jimp major upgrade,
+tracked separately - see Task 9/10 for the full accounting.
+
+Commit-Machine: toolbx
+EOF
+)"
+```
+
+---
+
+### Task 9: Re-run the full `pnpm audit` and confirm the remaining findings are only `mongoose`, `ical>request`, `jimp`'s `file-type`/`min-document`, and dev-only
 
 **Files:**
 
@@ -609,8 +712,8 @@ If no same-major fix exists, skip the commit — there is nothing to commit for 
 
 **Interfaces:**
 
-- Consumes: the cumulative state of `package.json`/`pnpm-lock.yaml` from Tasks 1–7.
-- Produces: the final findings list for the PR description in Task 9.
+- Consumes: the cumulative state of `package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml` from Tasks 1–8.
+- Produces: the final findings list for the PR description in Task 10.
 
 - [ ] **Step 1: Run the full audit**
 
@@ -635,15 +738,20 @@ print(d.get('metadata'))
 
 - [ ] **Step 2: Verify the remaining list**
 
-Expected: every remaining non-dev finding has `module_name == "mongoose"`, or `module_name == "request"` with a path rooted at `ical>request` (the accepted-risk item from Global Constraints — unmaintained package, no real fix exists). Every other non-dev finding from the original review (handlebars, i18next-fs-backend, i18next-http-middleware, form-data, nanoid, dompurify, sanitize-html, nodemailer's high finding if Task 7 found a fix, express's path-to-regexp/body-parser chain, axios, postcss, ts-deepmerge, tough-cookie, phin) should be gone.
+Expected: every remaining non-dev finding has `module_name` equal to one of:
+- `mongoose` (accepted risk, Global Constraints — needs a 5->6 migration)
+- `request` with a path rooted at `ical>request` (accepted risk, Global Constraints — unmaintained package, no real fix exists)
+- `file-type` or `min-document` with a path rooted at `jimp` (accepted risk, added by Task 8's investigation — needs a `jimp` major-version upgrade)
 
-If anything unexpected remains (a non-dev finding that isn't `mongoose` or `ical`-rooted `request`), stop and investigate — either an override didn't resolve correctly (check `pnpm why <pkg>`) or a new advisory was published since the review. Do not proceed to Task 9 with an unexplained finding.
+Every other non-dev finding — from the original review (handlebars, i18next-fs-backend, i18next-http-middleware, form-data, nanoid, dompurify, sanitize-html, nodemailer's high finding if Task 7 found a fix, express's path-to-regexp/body-parser chain, axios, postcss, ts-deepmerge, tough-cookie, phin) or from Task 8's discovery (validator, lodash via express-validator, ws, i18next-http-backend) — should be gone.
 
-- [ ] **Step 3: No commit** — this is a verification checkpoint, not a code change. Proceed to Task 9 with the confirmed final findings list in hand.
+If anything unexpected remains (a non-dev finding outside the three accepted-risk categories above), stop and investigate — either an override/removal didn't resolve correctly (check `pnpm why <pkg>`) or a new advisory was published since the review. Do not proceed to Task 10 with an unexplained finding.
+
+- [ ] **Step 3: No commit** — this is a verification checkpoint, not a code change. Proceed to Task 10 with the confirmed final findings list in hand.
 
 ---
 
-### Task 9: Full Cypress suite and PR
+### Task 10: Full Cypress suite and PR
 
 **Files:**
 
@@ -651,7 +759,7 @@ If anything unexpected remains (a non-dev finding that isn't `mongoose` or `ical
 
 **Interfaces:**
 
-- Consumes: the complete set of commits from Tasks 1–7.
+- Consumes: the complete set of commits from Tasks 1–8.
 - Produces: nothing (terminal task).
 
 - [ ] **Step 1: Run the full test suite**
@@ -675,12 +783,14 @@ gh pr create --base feat/mad-customizations --title "Dependency security updates
 ## Summary
 - Bumps handlebars, i18next-fs-backend, i18next-http-middleware, dompurify, sanitize-html, nanoid, and express to their patched versions, closing the critical/high findings from a pnpm-audit review that are reachable from production code paths.
 - Bumps @sendgrid/mail from 6.x to 8.1.6 to match the already-pinned @sendgrid/helpers@^8.0.0, which also drops the deprecated `request`/`form-data@2.x` client for the sendgrid mail path.
-- Adds pnpm.overrides for form-data, axios, postcss, ts-deepmerge, tough-cookie, and phin, which are pulled in transitively by mailgun.js, ical's legacy `request` client, sanitize-html, and jimp and can't be bumped directly.
+- Adds overrides (in `pnpm-workspace.yaml` — pnpm 11 no longer reads `package.json`'s `pnpm` field) for form-data, axios, postcss, ts-deepmerge, tough-cookie, phin, and ws, which are pulled in transitively and can't be bumped directly.
+- Removes `express-validator` and `i18next-http-backend`, two dependencies confirmed unused anywhere in the codebase, closing their advisories (validator, lodash-via-express-validator, i18next-http-backend's own path traversal) by deleting dead weight rather than patching packages that add no value. These surfaced during the final audit re-check, not the original review — see Task 8/9 in the linked plan for the investigation.
 - <fill in nodemailer outcome from Task 7: either "Bumps nodemailer to X.Y.Z" or "Nodemailer's high-severity raw-option fix requires a major version bump (6.x -> 7.x/8.x/9.x) and is deferred to a follow-up, since EmailService's transport config needs review against the new API first.">
 
 ## Explicitly out of scope
 - mongoose stays at 5.13.22. Its critical search-injection and NoSQL-injection findings only have fixes in the 6.x line; a 5->6 migration touches every model/query in src/models and src/routes and needs its own dedicated plan.
 - The `request` package itself (pulled in only via `ical>request` after this PR) has a moderate SSRF advisory with no real fix available — it's unmaintained, last published 2.88.2, and the advisory's claimed patched floor was never released. Scoped entirely to the calendar-import feature. Replacing `ical` (e.g. with `node-ical`) is the real fix and is a separate piece of work.
+- `file-type`/`min-document` (moderate/low, via `jimp`) — `jimp@0.16.13` pins `file-type@16.5.4` five majors behind the patched floor; forcing it via override risks breaking banner-image-upload type detection. Needs a `jimp` major-version upgrade as separate, tested work.
 - Dev-only findings (eslint's minimatch/brace-expansion/js-yaml/flatted chain, cypress's extract-zip/tmp/cross-spawn, jscodeshift's @babel/core, nodemon's semver, picomatch) are untouched — never bundled into dist/, not urgent.
 
 ## Test plan
@@ -688,7 +798,7 @@ gh pr create --base feat/mad-customizations --title "Dependency security updates
 - [x] `pnpm lint` passes after each bump
 - [x] Manual smoke checks per task (language detection, sanitization round-trip, route boot, config-merge hot path, sendgrid client wiring)
 - [x] Full `pnpm test` (Cypress) passes on the final state
-- [x] Final `pnpm audit` confirms only mongoose, ical's request, and dev-only findings remain
+- [x] Final `pnpm audit` confirms only mongoose, ical's request, jimp's file-type/min-document, and dev-only findings remain
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
