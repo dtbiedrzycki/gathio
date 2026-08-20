@@ -57,14 +57,14 @@ importers:
         specifier: ^8.0.4
         version: 8.0.4
       i18next-fs-backend:
-        specifier: ^2.6.0
-        version: 2.6.0
+        specifier: ^2.6.6
+        version: 2.6.7
       i18next-http-backend:
         specifier: ^3.0.2
         version: 3.0.2
       i18next-http-middleware:
-        specifier: ^3.7.1
-        version: 3.7.1
+        specifier: ^3.9.7
+        version: 3.9.8
       ical:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1684,14 +1684,14 @@ packages:
   i18next-browser-languagedetector@8.0.4:
     resolution: {integrity: sha512-f3frU3pIxD50/Tz20zx9TD9HobKYg47fmAETb117GKGPrhwcSSPJDoCposXlVycVebQ9GQohC3Efbpq7/nnJ5w==}
 
-  i18next-fs-backend@2.6.0:
-    resolution: {integrity: sha512-3ZlhNoF9yxnM8pa8bWp5120/Ob6t4lVl1l/tbLmkml/ei3ud8IWySCHt2lrY5xWRlSU5D9IV2sm5bEbGuTqwTw==}
+  i18next-fs-backend@2.6.7:
+    resolution: {integrity: sha512-nN2TIycyR/d+OVuLm1ugPyOlMprqPRnQ7QktBgn44F3H8l7TeTH4ffHJ7nUsd4QVJfetWW7/VZ3s+4g7FoAZUA==}
 
   i18next-http-backend@3.0.2:
     resolution: {integrity: sha512-PdlvPnvIp4E1sYi46Ik4tBYh/v/NbYfFFgTjkwFl0is8A18s7/bx9aXqsrOax9WUbeNS6mD2oix7Z0yGGf6m5g==}
 
-  i18next-http-middleware@3.7.1:
-    resolution: {integrity: sha512-nVTSGB1P4Gad5PFQYf3xVUOzJ4tVSQYD8Rs0luyWkjEMwqdqAcZ9CqIzqYwVLgB5/BKr1COI0oAei5dlYzmGbg==}
+  i18next-http-middleware@3.9.8:
+    resolution: {integrity: sha512-HMKPc/P/v3qI+JX1k8RLsc4IKT3nKwKFt4cPDZB+iSLlEkUblpjiJ2z3YZYgHgY2Xs6cnnqFkJIg4AU3JSTNaA==}
 
   i18next@24.2.2:
     resolution: {integrity: sha512-NE6i86lBCKRYZa5TaUDkU5S4HFgLIEJRLr3Whf2psgaxBleQ2LC1YW1Vc+SCgkAW7VEzndT6al6+CzegSUHcTQ==}
@@ -3674,7 +3674,7 @@ snapshots:
 
   '@types/i18next-fs-backend@1.2.0':
     dependencies:
-      i18next-fs-backend: 2.6.0
+      i18next-fs-backend: 2.6.7
 
   '@types/ical@0.8.3':
     dependencies:
@@ -4825,7 +4825,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.24.6
 
-  i18next-fs-backend@2.6.0: {}
+  i18next-fs-backend@2.6.7: {}
 
   i18next-http-backend@3.0.2:
     dependencies:
@@ -4833,7 +4833,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  i18next-http-middleware@3.7.1: {}
+  i18next-http-middleware@3.9.8: {}
 
   i18next@24.2.2(typescript@5.4.5):
     dependencies:
