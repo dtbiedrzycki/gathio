@@ -806,7 +806,85 @@ EOF
 
 ---
 
-### Task 10: Re-run the full `pnpm audit` and confirm the remaining findings are only `mongoose`, `ical>request`, `jimp`'s `file-type`/`min-document`, and dev-only
+### Task 10: Override `brace-expansion` to close the remaining high-severity ReDoS
+
+**Files:**
+
+- Modify: `pnpm-workspace.yaml` (add one entry to the existing `overrides:` block)
+- Modify: `pnpm-lock.yaml`
+
+**Interfaces:**
+
+- Consumes: nothing from other tasks.
+- Produces: nothing consumed by later tasks.
+
+**Why this task exists:** Task 9's `glob>minimatch: ^5.1.8` override fixed the vulnerable `minimatch@5.1.6` under `express-handlebars>glob`, and `minimatch@5.1.9` (the version that resolved) brought along `brace-expansion@2.0.1` — which cleared the _older_ brace-expansion advisories (patched floor `>=2.0.2`/`>=2.0.3`) but not the newer high-severity ones, whose patched floor is `>=2.1.4`. This means `brace-expansion@2.0.1` under `express-handlebars>glob>minimatch>brace-expansion` is still vulnerable to three high-severity ReDoS/OOM advisories. A 3-level scoped override (`glob>minimatch>brace-expansion`) isn't possible — Task 9 already established pnpm 11.22.0 only supports 2-level `parent>child` selectors. A 2-level `minimatch>brace-expansion` selector would apply to every `minimatch` instance in the tree, including the dev-only `eslint`/`nodemon` (`minimatch@3.1.2`) and `typescript-eslint` (`minimatch@9.0.5`) chains, which is exactly the blast-radius risk Task 9 avoided by scoping through `glob` instead.
+
+The controller tested a **blanket** `brace-expansion: ^2.1.4` override directly (not scoped) and confirmed it's safe here: `pnpm install`, `pnpm build`, and `pnpm lint` (which actually runs `eslint`, exercising the `minimatch@3.1.2` chain for real, not just resolving it) all passed cleanly, and `pnpm why brace-expansion` afterward showed all three minimatch chains (3.1.2, 5.1.9, 9.0.5) deduped to a single patched `brace-expansion@2.1.4` — brace-expansion's `expand(str)` API is unchanged across 1.x→2.x, so minimatch 3.x's usage of it isn't affected by the major bump. This task formalizes that already-verified change through the normal implement-and-review path.
+
+- [ ] **Step 1: Add the brace-expansion override**
+
+Edit `pnpm-workspace.yaml`. The `overrides:` block already exists (Tasks 6, 8, and 9 added to it) — add one more line:
+
+```yaml
+overrides:
+  form-data: ^4.0.6
+  axios: ^1.18.0
+  postcss: ^8.5.18
+  ts-deepmerge: ^8.0.0
+  tough-cookie: ^4.1.3
+  phin: ^3.7.1
+  ws: ^8.21.0
+  glob>minimatch: ^5.1.8
+  brace-expansion: ^2.1.4
+```
+
+- [ ] **Step 2: Reinstall and confirm resolution**
+
+Run:
+
+```bash
+pnpm install --store-dir="$TMPDIR/pnpm-store"
+pnpm why brace-expansion --store-dir="$TMPDIR/pnpm-store" 2>&1
+```
+
+Expected: `Found 1 version of brace-expansion` at `2.1.4` or above, with all three minimatch chains (the `express-handlebars>glob` one and the two dev-only ones) listed as consumers of that single deduped version.
+
+- [ ] **Step 3: Build**
+
+Run: `pnpm build`
+Expected: exits 0.
+
+- [ ] **Step 4: Lint**
+
+Run: `pnpm lint`
+Expected: exits 0, modulo the same 3 pre-existing unrelated files noted in every prior task. This step is the load-bearing safety check for this task specifically — `eslint` (which depends on the `minimatch@3.1.2` chain now forced onto `brace-expansion@2.1.4`) actually running clean is direct evidence the override didn't break dev tooling, not just that it resolved.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add pnpm-workspace.yaml pnpm-lock.yaml
+git -c gpg.format=ssh \
+    -c user.signingkey=~/.ssh/<signing_key> \
+    commit -S -m "$(cat <<'EOF'
+Override brace-expansion to close remaining high-severity ReDoS
+
+Task 9's minimatch fix incidentally pulled brace-expansion@2.0.1,
+which cleared the older advisories but not three high-severity
+ReDoS/OOM findings patched only at >=2.1.4. A blanket override (not
+scoped) is safe here: brace-expansion's expand() API is unchanged
+across the 1.x->2.x major, and pnpm lint (which actually runs eslint
+against the affected minimatch@3.1.2 chain) passes clean with the
+override in place.
+
+Commit-Machine: toolbx
+EOF
+)"
+```
+
+---
+
+### Task 11: Re-run the full `pnpm audit` and confirm the remaining findings are only `mongoose`, `ical>request`, `jimp`'s `file-type`/`min-document`, and dev-only
 
 **Files:**
 
@@ -814,8 +892,8 @@ EOF
 
 **Interfaces:**
 
-- Consumes: the cumulative state of `package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml` from Tasks 1–9.
-- Produces: the final findings list for the PR description in Task 11.
+- Consumes: the cumulative state of `package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml` from Tasks 1–10.
+- Produces: the final findings list for the PR description in Task 12.
 
 - [ ] **Step 1: Run the full audit**
 
@@ -846,15 +924,15 @@ Expected: every remaining non-dev finding has `module_name` equal to one of:
 - `request` with a path rooted at `ical>request` (accepted risk, Global Constraints — unmaintained package, no real fix exists)
 - `file-type` or `min-document` with a path rooted at `jimp` (accepted risk, added by Task 8's investigation — needs a `jimp` major-version upgrade)
 
-Every other non-dev finding — from the original review (handlebars, i18next-fs-backend, i18next-http-middleware, form-data, nanoid, dompurify, sanitize-html, nodemailer's high finding if Task 7 found a fix, express's path-to-regexp/body-parser chain, axios, postcss, ts-deepmerge, tough-cookie, phin), from Task 8's discovery (validator, lodash via express-validator, ws, i18next-http-backend), or from Task 9's discovery (minimatch/brace-expansion via express-handlebars>glob, lodash/joi via wait-on) — should be gone (the `wait-on`-rooted `lodash`/`joi` findings should now report `dev: true` rather than being absent, since Task 9 reclassified rather than removed `wait-on`).
+Every other non-dev finding — from the original review (handlebars, i18next-fs-backend, i18next-http-middleware, form-data, nanoid, dompurify, sanitize-html, nodemailer's high finding if Task 7 found a fix, express's path-to-regexp/body-parser chain, axios, postcss, ts-deepmerge, tough-cookie, phin), from Task 8's discovery (validator, lodash via express-validator, ws, i18next-http-backend), or from Tasks 9/10's discovery (minimatch/brace-expansion via express-handlebars>glob at both the minimatch and brace-expansion levels, lodash/joi via wait-on) — should be gone (the `wait-on`-rooted `lodash`/`joi` findings should now report `dev: true` rather than being absent, since Task 9 reclassified rather than removed `wait-on`).
 
-If anything unexpected remains (a non-dev finding outside the three accepted-risk categories above), stop and investigate — either an override/removal didn't resolve correctly (check `pnpm why <pkg>`) or a new advisory was published since the review. Do not proceed to Task 11 with an unexplained finding.
+If anything unexpected remains (a non-dev finding outside the three accepted-risk categories above), stop and investigate — either an override/removal didn't resolve correctly (check `pnpm why <pkg>`) or a new advisory was published since the review. Do not proceed to Task 12 with an unexplained finding.
 
-- [ ] **Step 3: No commit** — this is a verification checkpoint, not a code change. Proceed to Task 11 with the confirmed final findings list in hand.
+- [ ] **Step 3: No commit** — this is a verification checkpoint, not a code change. Proceed to Task 12 with the confirmed final findings list in hand.
 
 ---
 
-### Task 11: Full Cypress suite and PR
+### Task 12: Full Cypress suite and PR
 
 **Files:**
 
@@ -862,7 +940,7 @@ If anything unexpected remains (a non-dev finding outside the three accepted-ris
 
 **Interfaces:**
 
-- Consumes: the complete set of commits from Tasks 1–9.
+- Consumes: the complete set of commits from Tasks 1–10.
 - Produces: nothing (terminal task).
 
 - [ ] **Step 1: Run the full test suite**
@@ -889,6 +967,7 @@ gh pr create --base feat/mad-customizations --title "Dependency security updates
 - Adds overrides (in `pnpm-workspace.yaml` — pnpm 11 no longer reads `package.json`'s `pnpm` field) for form-data, axios, postcss, ts-deepmerge, tough-cookie, phin, and ws, which are pulled in transitively and can't be bumped directly.
 - Removes `express-validator` and `i18next-http-backend`, two dependencies confirmed unused anywhere in the codebase, closing their advisories (validator, lodash-via-express-validator, i18next-http-backend's own path traversal) by deleting dead weight rather than patching packages that add no value. These surfaced during the final audit re-check, not the original review — see Task 8/9 in the linked plan for the investigation.
 - Scopes a `minimatch` override to `express-handlebars>glob>minimatch` (high-severity ReDoS) without disturbing the different `minimatch` majors that `eslint`/`nodemon`/`typescript-eslint` expect, and reclassifies `wait-on` from `dependencies` to `devDependencies` (it's CLI-only test tooling, never imported in `src/`) to correctly exclude its `lodash`/`joi` dependents from the production audit surface. Also discovered during the audit re-check, not the original review.
+- Adds a blanket `brace-expansion` override (`^2.1.4`) to close three remaining high-severity ReDoS/OOM findings that the minimatch fix above didn't reach — `minimatch@5.1.9` bundled `brace-expansion@2.0.1`, which cleared older advisories but not these; verified safe against the dev-only `minimatch@3.x` chain via a real `pnpm lint` run (which executes `eslint`), not just dependency resolution.
 - <fill in nodemailer outcome from Task 7: either "Bumps nodemailer to X.Y.Z" or "Nodemailer's high-severity raw-option fix requires a major version bump (6.x -> 7.x/8.x/9.x) and is deferred to a follow-up, since EmailService's transport config needs review against the new API first.">
 
 ## Explicitly out of scope
