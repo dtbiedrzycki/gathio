@@ -45,11 +45,11 @@ importers:
         specifier: ^6.15.0
         version: 6.15.0
       handlebars:
-        specifier: ^4.7.8
-        version: 4.7.8
+        specifier: ^4.7.9
+        version: 4.7.9
       handlebars-i18next:
         specifier: ^1.0.3
-        version: 1.0.3(handlebars@4.7.8)(i18next@24.2.2(typescript@5.4.5))
+        version: 1.0.3(handlebars@4.7.9)(i18next@24.2.2(typescript@5.4.5))
       i18next:
         specifier: ^24.2.2
         version: 24.2.2(typescript@5.4.5)
@@ -1610,8 +1610,8 @@ packages:
       handlebars: '4'
       i18next: '>=11'
 
-  handlebars@4.7.8:
-    resolution: {integrity: sha512-vafaFqs8MZkRrSX7sFVUdo3ap/eNiLnb4IakshzvP56X5Nr1iGKAIqdX6tMlm6HcNRIkr6AxO5jFEoJzzpT8aQ==}
+  handlebars@4.7.9:
+    resolution: {integrity: sha512-4E71E0rpOaQuJR2A3xDZ+GM1HyWYv1clR58tC8emQNeQe3RH7MAzSbat+V0wG78LQBo6m6bzSG/L4pBuCsgnUQ==}
     engines: {node: '>=0.4.7'}
     hasBin: true
 
@@ -3668,7 +3668,7 @@ snapshots:
 
   '@types/handlebars@4.1.0':
     dependencies:
-      handlebars: 4.7.8
+      handlebars: 4.7.9
 
   '@types/http-errors@2.0.4': {}
 
@@ -4478,7 +4478,7 @@ snapshots:
     dependencies:
       glob: 8.1.0
       graceful-fs: 4.2.11
-      handlebars: 4.7.8
+      handlebars: 4.7.9
 
   express-session@1.18.0(supports-color@5.5.0):
     dependencies:
@@ -4732,12 +4732,12 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  handlebars-i18next@1.0.3(handlebars@4.7.8)(i18next@24.2.2(typescript@5.4.5)):
+  handlebars-i18next@1.0.3(handlebars@4.7.9)(i18next@24.2.2(typescript@5.4.5)):
     dependencies:
-      handlebars: 4.7.8
+      handlebars: 4.7.9
       i18next: 24.2.2(typescript@5.4.5)
 
-  handlebars@4.7.8:
+  handlebars@4.7.9:
     dependencies:
       minimist: 1.2.8
       neo-async: 2.6.2
