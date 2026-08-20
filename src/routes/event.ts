@@ -34,6 +34,7 @@ import { checkMagicLink, getConfigMiddleware } from "../lib/middleware.js";
 import { frontendConfig, getConfig } from "../lib/config.js";
 import { getCustomQuestionsForDisplay } from "../lib/event.js";
 import { notifyHostOfNewAttendee } from "../lib/email.js";
+import { parseInviteCsv } from "../lib/invite.js";
 import { getMessage } from "../util/messages.js";
 import i18next from "i18next";
 moment.locale(i18next.language);
@@ -60,6 +61,21 @@ const icsUpload = multer({
     const filetype = "text/calendar";
     if (file.mimetype !== filetype) {
       return cb(new Error("Only ICS files are allowed."));
+    }
+    cb(null, true);
+  },
+});
+const csvUpload = multer({
+  storage: storage,
+  limits: { fileSize: 100 * 1024 },
+  fileFilter: function (_, file, cb) {
+    const allowedMimetypes = [
+      "text/csv",
+      "application/vnd.ms-excel",
+      "text/plain",
+    ];
+    if (!allowedMimetypes.includes(file.mimetype)) {
+      return cb(new Error("Only CSV files are allowed."));
     }
     cb(null, true);
   },
@@ -622,6 +638,72 @@ router.put(
         ],
       });
     }
+  },
+);
+
+router.post(
+  "/event/:eventID/invite",
+  csvUpload.single("csvUpload"),
+  async (req: Request, res: Response) => {
+    if (!req.file) {
+      return res.status(400).json({
+        errors: [{ message: "No CSV file was provided." }],
+      });
+    }
+
+    const event = await Event.findOne({ id: req.params.eventID });
+    if (!event) {
+      return res.status(404).json({
+        errors: [{ message: "Event not found." }],
+      });
+    }
+
+    const submittedEditToken = req.query.e || req.body.editToken;
+    if (!submittedEditToken || event.editToken !== submittedEditToken) {
+      addToLog(
+        "inviteToEvent",
+        "error",
+        `Attempt to send invites for event ${req.params.eventID} failed with error: token does not match`,
+      );
+      return res.status(403).json({
+        errors: [{ message: "Edit token is invalid." }],
+      });
+    }
+
+    const parsed = parseInviteCsv(req.file.buffer);
+    if (!parsed.ok) {
+      return res.status(400).json({ errors: [{ message: parsed.error }] });
+    }
+
+    const subject = i18next.t("routes.invitetoeventsubject", {
+      eventName: event.name,
+    });
+    await Promise.all(
+      parsed.valid.map((invite) =>
+        req.emailService.sendEmailFromTemplate({
+          to: invite.email,
+          subject,
+          templateName: "inviteToEvent",
+          templateData: {
+            name: invite.name,
+            eventID: event.id,
+            eventName: event.name,
+          },
+        }),
+      ),
+    );
+
+    addToLog(
+      "inviteToEvent",
+      "success",
+      `Sent ${parsed.valid.length} invite(s) for event ${req.params.eventID}, skipped ${parsed.skipped.length}`,
+    );
+
+    return res.json({
+      sent: parsed.valid.length,
+      skipped: parsed.skipped.length,
+      skippedReasons: parsed.skipped.map((s) => `Row ${s.row}: ${s.reason}`),
+    });
   },
 );
 
