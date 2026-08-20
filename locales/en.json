@@ -421,5 +421,11 @@
   "views.publiceventlist.upcomingevents": "Upcoming events",
   "views.right": "Get it right!",
   "views.event.location_hidden": "Location hidden",
-  "views.event.location_hidden_desc": "To see the location, RSVP to the event below."
+  "views.event.location_hidden_desc": "To see the location, RSVP to the event below.",
+  "routes.invitetoeventsubject": "You're invited to {{ eventName }}",
+  "views.emails.invitetoevent.eventlink": "View the event",
+  "views.emails.invitetoevent.greeting": "Hi",
+  "views.emails.invitetoevent.greetingfallback": "Hi there,",
+  "views.emails.invitetoevent.preface": "You've been invited to an event on {{ siteName }}:",
+  "views.emails.invitetoevent.viewevent": "View the event"
 }

@@ -29,6 +29,7 @@ type EmailTemplateName =
   | "deleteEvent"
   | "editEvent"
   | "eventGroupUpdated"
+  | "inviteToEvent"
   | "removeEventAttendee"
   | "resendRemovalLink"
   | "subscribed"
