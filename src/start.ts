@@ -4,13 +4,11 @@ import app from "./app.js";
 
 const config = getConfig();
 
-mongoose.connect(config.database.mongodb_url, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-mongoose.set("useCreateIndex", true);
-mongoose.set("useFindAndModify", false);
-mongoose.Promise = global.Promise;
+mongoose.set("strictQuery", false);
+// mongoose.connect() returns a promise as of mongoose 6+ (previously it
+// returned the Mongoose instance); catch it so a connection failure doesn't
+// also surface as an unhandled rejection alongside the "error" event below.
+mongoose.connect(config.database.mongodb_url).catch(() => {});
 mongoose.connection
   .on("connected", () => {
     console.log("Mongoose connection open!");

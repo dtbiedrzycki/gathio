@@ -915,7 +915,7 @@ router.post(
 
       if (event.editToken === submittedEditToken) {
         // Token matches
-        event.comments.id(req.params.commentID).remove();
+        event.comments.id(req.params.commentID).deleteOne();
 
         try {
           await event.save();
