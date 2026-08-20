@@ -49,6 +49,23 @@ Handlebars views + `handlebars-i18next`, Alpine.js in
   Cypress e2e (`pnpm test`, needs a real MongoDB + a Cypress-capable
   browser environment; this sandbox lacks both, so the executor must
   actually run these against a working `pnpm dev`/`pnpm test` setup).
+- `eslint.config.js` globally ignores all of `public/js/**` (vendored +
+  app scripts alike), confirmed by running eslint directly against
+  `public/js/modules/event-edit.js` — it reports "File ignored because of
+  a matching ignore pattern" rather than linting it. This is pre-existing,
+  matches `CLAUDE.md`'s note that `public/js/` is lint-ignored, and is not
+  something this feature should change. `event-edit.js` changes are
+  verified by `pnpm build` (irrelevant, it's not compiled), Prettier, and
+  the Cypress e2e in Task 5 — not eslint.
+- Running `pnpm lint` / bare `prettier --check .` unscoped from a repo
+  root that has stray non-project dotfiles at its root (harness/IDE
+  artifacts such as `.claude`, `.mcp.json`, `.idea`, `.vscode`) can fail
+  with permission errors reading those paths in some sandboxed dev setups
+  — unrelated to this feature's files. If that happens, scope the check
+  to project paths instead, e.g.
+  `pnpm exec prettier --check src public/js/modules cypress locales package.json config`
+  and `pnpm exec eslint src cypress`, which cover everything this plan
+  touches.
 
 ---
 
@@ -638,8 +655,11 @@ Handlebars views + `handlebars-i18next`, Alpine.js in
   Run: `pnpm build`
   Expected: compiles with no errors.
 
-  Run: `pnpm exec eslint public/js/modules/event-edit.js`
-  Expected: no errors.
+  Skip eslint on this file: `eslint.config.js` globally ignores all of
+  `public/js/**` (see Global Constraints), so `pnpm exec eslint
+  public/js/modules/event-edit.js` only reports "File ignored because of a
+  matching ignore pattern" — not a real check. This matches existing
+  repo/CLAUDE.md convention; do not change the eslint config to force it.
 
   Run: `pnpm exec prettier --check public/js/modules/event-edit.js locales/en.json`
   Expected: passes (or `--write` then re-check). `views/` stays
@@ -841,7 +861,11 @@ Handlebars views + `handlebars-i18next`, Alpine.js in
 - [ ] **Step 2: Full lint**
 
   Run: `pnpm lint`
-  Expected: no errors (eslint + prettier --check across the repo).
+  Expected: no errors (eslint + prettier --check across the repo). If this
+  fails on permission errors reading non-project dotfiles at the repo root
+  (see Global Constraints), run the scoped equivalent instead:
+  `pnpm exec eslint src cypress` and
+  `pnpm exec prettier --check src public/js/modules cypress locales package.json config`.
 
 - [ ] **Step 3: Full Cypress suite**
 
