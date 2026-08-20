@@ -215,6 +215,7 @@ router.get("/", (_: Request, res: Response) => {
     ...frontendConfig(res),
     instanceRules: instanceRules(),
     instanceDescription: instanceDescription(),
+    showCreateEventButton: true,
   });
 });
 
