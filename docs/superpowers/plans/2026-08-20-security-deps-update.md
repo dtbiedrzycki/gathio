@@ -617,6 +617,7 @@ If no same-major fix exists, skip the commit — there is nothing to commit for 
 **Why this task exists:** Task 9 (the full audit re-check, originally numbered Task 8) is a verification gate, and running it against the state after Tasks 1–7 surfaced findings the original security review missed: `validator` (high) and `lodash` (high/moderate) via `express-validator`, `ws` (high) via `jsdom`, and `i18next-http-backend` (moderate, the same path-traversal/prototype-pollution shape as `i18next-http-middleware`, which Task 2 already fixed). Investigation (`grep -rn "express-validator" --include="*.ts" --include="*.js" .` and `grep -rn "i18next-http-backend" src/`) confirmed both `express-validator` and `i18next-http-backend` have **zero imports anywhere in the codebase** — they're dead dependencies. `jsdom` (which pulls `ws`) IS actively used, in `src/util/markdown.ts` for DOMPurify's `window` object — but only for DOM sanitization, never for anything WebSocket-related, so forcing `ws` to a patched version is safe.
 
 Two related findings were investigated and ruled **out of scope** rather than fixed here — do not attempt them in this task:
+
 - `file-type`/`min-document` (moderate/low) via `jimp` (used in `src/routes/group.ts` and `src/routes/event.ts` for banner image resizing): `jimp@0.16.13` pins `file-type@16.5.4` deep in its own internal chain (`@jimp/core>load-bmfont>file-type`), five major versions behind the patched floor (`>=21.3.1`). Forcing that version via override risks breaking image-type detection on banner uploads, since `file-type`'s API has changed across those majors. This needs a `jimp` major-version upgrade (0.16 -> a current major) as separate, tested work — same category as the `mongoose` and `ical` deferrals.
 - `validator`/`lodash` are fully resolved by removing `express-validator` (below) — no override needed.
 
@@ -739,6 +740,7 @@ print(d.get('metadata'))
 - [ ] **Step 2: Verify the remaining list**
 
 Expected: every remaining non-dev finding has `module_name` equal to one of:
+
 - `mongoose` (accepted risk, Global Constraints — needs a 5->6 migration)
 - `request` with a path rooted at `ical>request` (accepted risk, Global Constraints — unmaintained package, no real fix exists)
 - `file-type` or `min-document` with a path rooted at `jimp` (accepted risk, added by Task 8's investigation — needs a `jimp` major-version upgrade)
