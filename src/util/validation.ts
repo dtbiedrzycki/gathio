@@ -79,7 +79,7 @@ export type ValidatedEventGroupData = Omit<EventGroupData, "publicCheckbox"> & {
   publicBoolean: boolean;
 };
 
-const validateEmail = (email: string) => {
+export const validateEmail = (email: string) => {
   if (!email || email.length === 0 || typeof email !== "string") {
     return false;
   }

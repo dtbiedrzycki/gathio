@@ -1,4 +1,9 @@
-import { Router, type Response, type Request } from "express";
+import {
+  Router,
+  type Response,
+  type Request,
+  type NextFunction,
+} from "express";
 import multer from "multer";
 import Jimp from "jimp";
 import moment from "moment-timezone";
@@ -34,6 +39,7 @@ import { checkMagicLink, getConfigMiddleware } from "../lib/middleware.js";
 import { frontendConfig, getConfig } from "../lib/config.js";
 import { getCustomQuestionsForDisplay } from "../lib/event.js";
 import { notifyHostOfNewAttendee } from "../lib/email.js";
+import { parseInviteCsv } from "../lib/invite.js";
 import { getMessage } from "../util/messages.js";
 import i18next from "i18next";
 moment.locale(i18next.language);
@@ -60,6 +66,21 @@ const icsUpload = multer({
     const filetype = "text/calendar";
     if (file.mimetype !== filetype) {
       return cb(new Error("Only ICS files are allowed."));
+    }
+    cb(null, true);
+  },
+});
+const csvUpload = multer({
+  storage: storage,
+  limits: { fileSize: 100 * 1024 },
+  fileFilter: function (_, file, cb) {
+    const allowedMimetypes = [
+      "text/csv",
+      "application/vnd.ms-excel",
+      "text/plain",
+    ];
+    if (!allowedMimetypes.includes(file.mimetype)) {
+      return cb(new Error("Only CSV files are allowed."));
     }
     cb(null, true);
   },
@@ -626,6 +647,94 @@ router.put(
 );
 
 router.post(
+  "/event/:eventID/invite",
+  csvUpload.single("csvUpload"),
+  async (req: Request, res: Response) => {
+    if (!req.file) {
+      return res.status(400).json({
+        errors: [{ message: "No CSV file was provided." }],
+      });
+    }
+
+    const submittedEditToken = req.query.e || req.body.editToken;
+    if (!submittedEditToken) {
+      return res.status(401).json({ error: "Edit token required." });
+    }
+
+    try {
+      const event = await Event.findOne({ id: req.params.eventID });
+      if (!event) {
+        return res.status(404).json({
+          errors: [{ message: "Event not found." }],
+        });
+      }
+
+      if (event.editToken !== submittedEditToken) {
+        addToLog(
+          "inviteToEvent",
+          "error",
+          `Attempt to send invites for event ${req.params.eventID} failed with error: token does not match`,
+        );
+        return res.status(403).json({
+          errors: [{ message: "Edit token is invalid." }],
+        });
+      }
+
+      const parsed = parseInviteCsv(req.file.buffer);
+      if (!parsed.ok) {
+        return res.status(400).json({ errors: [{ message: parsed.error }] });
+      }
+
+      const subject = i18next.t("routes.invitetoeventsubject", {
+        eventName: event.name,
+      });
+      const results = await Promise.all(
+        parsed.valid.map((invite) =>
+          req.emailService.sendEmailFromTemplate({
+            to: invite.email,
+            subject,
+            templateName: "inviteToEvent",
+            templateData: {
+              name: invite.name,
+              eventID: event.id,
+              eventName: event.name,
+            },
+          }),
+        ),
+      );
+      const sentCount = results.filter(Boolean).length;
+
+      addToLog(
+        "inviteToEvent",
+        "success",
+        `Sent ${sentCount} invite(s) for event ${req.params.eventID}, skipped ${parsed.skipped.length}`,
+      );
+
+      return res.json({
+        sent: sentCount,
+        skipped: parsed.skipped.length,
+        skippedReasons: parsed.skipped.map((s) => `Row ${s.row}: ${s.reason}`),
+      });
+    } catch (e) {
+      addToLog(
+        "inviteToEvent",
+        "error",
+        `Attempt to send invites for event ${req.params.eventID} failed with error: ${e}`,
+      );
+      return res.status(500).json({
+        errors: [{ message: "An unexpected error occurred." }],
+      });
+    }
+  },
+  // Catches multer errors (bad mimetype, file too large) from
+  // csvUpload.single() above so they return this route's JSON error
+  // contract instead of Express's default HTML error page.
+  (err: Error, _req: Request, res: Response, _next: NextFunction) => {
+    return res.status(400).json({ errors: [{ message: err.message }] });
+  },
+);
+
+router.post(
   "/import/event",
   icsUpload.single("icsImportControl"),
   checkMagicLink,
@@ -947,6 +1056,55 @@ router.delete(
   },
 );
 
+// Re-sends an attendee's manage/decline/erase links by email, for anyone who
+// lost the link (different browser, cleared storage, etc). Always responds
+// with the same generic message regardless of whether the email matches an
+// attendee, so this can't be used to test which emails are RSVPed - same
+// anti-enumeration pattern as the magic-link create-event flow
+// (src/routes/magicLink.ts).
+router.post(
+  "/event/:eventID/resend-link",
+  async (req: Request, res: Response) => {
+    const email = req.body.email;
+    if (!email) {
+      return res.status(400).json({ error: "Please provide an email." });
+    }
+    const event = await Event.findOne({ id: req.params.eventID });
+    if (!event) {
+      return res.status(404).json({ error: "Event not found." });
+    }
+    const matches = event.attendees?.filter(
+      (a) =>
+        a.email?.toLowerCase() === email.toLowerCase() &&
+        a.status !== "provisioned",
+    );
+    for (const attendee of matches || []) {
+      if (!attendee.removalPassword) continue;
+      req.emailService.sendEmailFromTemplate({
+        to: email,
+        subject: i18next.t("routes.resendremovallinksubject", {
+          eventName: event.name,
+        }),
+        templateName: "resendRemovalLink",
+        templateData: {
+          eventID: req.params.eventID,
+          eventName: event.name,
+          removalPassword: attendee.removalPassword,
+          removalPasswordHash: hashString(attendee.removalPassword),
+        },
+      });
+    }
+    addToLog(
+      "resendRemovalLink",
+      "success",
+      `Resend-link requested for event ${req.params.eventID}`,
+    );
+    return res.json({
+      message: i18next.t("routes.resendremovallinksent"),
+    });
+  },
+);
+
 // Finalize attendance (convert provisioned attendee to attending)
 router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
   const {
@@ -1005,8 +1163,9 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
       if (isHostAdding) {
         return res.redirect(`/${req.params.eventID}?e=${editToken}`);
       }
+      const declinedNoEmailFlag = attendee.email ? "" : "&noemail=1";
       return res.redirect(
-        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpdeclined`,
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpdeclined${declinedNoEmailFlag}`,
       );
     }
 
@@ -1127,18 +1286,19 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     }
 
     // Redirect appropriately based on who is adding the attendee
+    const attendingNoEmailFlag = attendee.email ? "" : "&noemail=1";
     if (isHostAdding) {
       // Host added attendee - redirect back to edit view
       return res.redirect(`/${req.params.eventID}?e=${editToken}`);
     } else if (event.approveRegistrations) {
       // Approval required - show save link modal since location is hidden until approved
       return res.redirect(
-        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvppending`,
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvppending${attendingNoEmailFlag}`,
       );
     } else {
       // No approval needed - just redirect with ?p
       return res.redirect(
-        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpgoing`,
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpgoing${attendingNoEmailFlag}`,
       );
     }
   } catch (e) {

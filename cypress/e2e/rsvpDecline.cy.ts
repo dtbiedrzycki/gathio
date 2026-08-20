@@ -155,14 +155,57 @@ describe("RSVP Decline", () => {
     // before interacting with anything behind it.
     cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("not.be.visible");
 
+    // Reaching this modal always means the token was already resolved (from
+    // the ?p= the decline redirect carried), so there's no password/code
+    // field to fill in - just a confirmation to submit.
     cy.get("button#deleteMyInfo").click();
     cy.get("#unattendModal").should("be.visible");
-    cy.get("#unattendModal #removalPassword")
-      .invoke("val")
-      .should("not.be.empty");
+    cy.get("#unattendModal input[type=text], #unattendModal input[type=password]").should(
+      "not.exist",
+    );
     cy.get("form#unattendEventForm").submit();
 
     cy.visit(`/${this.eventID}?e=${this.editToken}`);
     cy.get("#eventDeclined").should("not.exist");
+  });
+
+  it("shows a save-your-link prompt after RSVPing without an email", function () {
+    visitFresh(`/${this.eventID}`);
+
+    cy.get("button#attendEvent").click();
+    cy.get("#attendModal").should("be.visible");
+    cy.get("#attendModal").should("have.focus");
+    cy.get("#attendeeName").type("No Email Given");
+    cy.get("form#attendEventForm").submit();
+
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+    cy.get("#rsvpConfirmModalSecretLink").should("be.visible");
+    cy.get("#rsvpSecretLink").invoke("val").should("not.be.empty");
+  });
+
+  it("does not show a save-your-link prompt after RSVPing with an email", function () {
+    visitFresh(`/${this.eventID}`);
+
+    cy.get("button#attendEvent").click();
+    cy.get("#attendModal").should("be.visible");
+    cy.get("#attendModal").should("have.focus");
+    cy.get("#attendeeName").type("Has Email");
+    cy.get("#attendeeEmail").type("hasemail@example.com");
+    cy.get("form#attendEventForm").submit();
+
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+    cy.get("#rsvpConfirmModalSecretLink").should("not.be.visible");
+  });
+
+  it("lets a visitor without a resolvable token request their link by email", function () {
+    visitFresh(`/${this.eventID}`);
+
+    cy.get("button#recoverLink").click();
+    cy.get("#recoverLinkModal").should("be.visible");
+    cy.get("#recoverLinkEmail").type("someone@example.com");
+    cy.get("form#recoverLinkForm").submit();
+
+    cy.get("#recoverLinkMessage").should("be.visible").and("not.be.empty");
+    cy.get("#recoverLinkModalDescription").should("not.be.visible");
   });
 });
