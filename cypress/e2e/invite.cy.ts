@@ -94,13 +94,47 @@ describe("CSV bulk invite", () => {
     cy.get("#invite-error").should("be.visible");
   });
 
-  it("rejects an invite request without a valid editToken", function () {
+  it("rejects an invite request with a present-but-wrong editToken", function () {
+    const boundary = "----cypressInviteBoundary";
+    const body =
+      `--${boundary}\r\n` +
+      `Content-Disposition: form-data; name="csvUpload"; filename="invites.csv"\r\n` +
+      `Content-Type: text/csv\r\n\r\n` +
+      `name,email\nAda Lovelace,ada@example.com\n` +
+      `\r\n--${boundary}--\r\n`;
+
     cy.request({
       method: "POST",
-      url: "/event/nonexistent-event-id/invite",
+      url: `/event/${this.eventID}/invite?e=wrong-token`,
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
       failOnStatusCode: false,
     }).then((response) => {
-      expect(response.status).to.eq(400);
+      expect(response.status).to.eq(403);
+    });
+  });
+
+  it("rejects an invite request with no editToken at all", function () {
+    const boundary = "----cypressInviteBoundary";
+    const body =
+      `--${boundary}\r\n` +
+      `Content-Disposition: form-data; name="csvUpload"; filename="invites.csv"\r\n` +
+      `Content-Type: text/csv\r\n\r\n` +
+      `name,email\nAda Lovelace,ada@example.com\n` +
+      `\r\n--${boundary}--\r\n`;
+
+    cy.request({
+      method: "POST",
+      url: `/event/${this.eventID}/invite`,
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+      failOnStatusCode: false,
+    }).then((response) => {
+      expect(response.status).to.eq(401);
     });
   });
 });

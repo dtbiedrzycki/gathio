@@ -1,4 +1,9 @@
-import { Router, type Response, type Request } from "express";
+import {
+  Router,
+  type Response,
+  type Request,
+  type NextFunction,
+} from "express";
 import multer from "multer";
 import Jimp from "jimp";
 import moment from "moment-timezone";
@@ -651,59 +656,81 @@ router.post(
       });
     }
 
-    const event = await Event.findOne({ id: req.params.eventID });
-    if (!event) {
-      return res.status(404).json({
-        errors: [{ message: "Event not found." }],
-      });
+    const submittedEditToken = req.query.e || req.body.editToken;
+    if (!submittedEditToken) {
+      return res.status(401).json({ error: "Edit token required." });
     }
 
-    const submittedEditToken = req.query.e || req.body.editToken;
-    if (!submittedEditToken || event.editToken !== submittedEditToken) {
+    try {
+      const event = await Event.findOne({ id: req.params.eventID });
+      if (!event) {
+        return res.status(404).json({
+          errors: [{ message: "Event not found." }],
+        });
+      }
+
+      if (event.editToken !== submittedEditToken) {
+        addToLog(
+          "inviteToEvent",
+          "error",
+          `Attempt to send invites for event ${req.params.eventID} failed with error: token does not match`,
+        );
+        return res.status(403).json({
+          errors: [{ message: "Edit token is invalid." }],
+        });
+      }
+
+      const parsed = parseInviteCsv(req.file.buffer);
+      if (!parsed.ok) {
+        return res.status(400).json({ errors: [{ message: parsed.error }] });
+      }
+
+      const subject = i18next.t("routes.invitetoeventsubject", {
+        eventName: event.name,
+      });
+      const results = await Promise.all(
+        parsed.valid.map((invite) =>
+          req.emailService.sendEmailFromTemplate({
+            to: invite.email,
+            subject,
+            templateName: "inviteToEvent",
+            templateData: {
+              name: invite.name,
+              eventID: event.id,
+              eventName: event.name,
+            },
+          }),
+        ),
+      );
+      const sentCount = results.filter(Boolean).length;
+
+      addToLog(
+        "inviteToEvent",
+        "success",
+        `Sent ${sentCount} invite(s) for event ${req.params.eventID}, skipped ${parsed.skipped.length}`,
+      );
+
+      return res.json({
+        sent: sentCount,
+        skipped: parsed.skipped.length,
+        skippedReasons: parsed.skipped.map((s) => `Row ${s.row}: ${s.reason}`),
+      });
+    } catch (e) {
       addToLog(
         "inviteToEvent",
         "error",
-        `Attempt to send invites for event ${req.params.eventID} failed with error: token does not match`,
+        `Attempt to send invites for event ${req.params.eventID} failed with error: ${e}`,
       );
-      return res.status(403).json({
-        errors: [{ message: "Edit token is invalid." }],
+      return res.status(500).json({
+        errors: [{ message: "An unexpected error occurred." }],
       });
     }
-
-    const parsed = parseInviteCsv(req.file.buffer);
-    if (!parsed.ok) {
-      return res.status(400).json({ errors: [{ message: parsed.error }] });
-    }
-
-    const subject = i18next.t("routes.invitetoeventsubject", {
-      eventName: event.name,
-    });
-    await Promise.all(
-      parsed.valid.map((invite) =>
-        req.emailService.sendEmailFromTemplate({
-          to: invite.email,
-          subject,
-          templateName: "inviteToEvent",
-          templateData: {
-            name: invite.name,
-            eventID: event.id,
-            eventName: event.name,
-          },
-        }),
-      ),
-    );
-
-    addToLog(
-      "inviteToEvent",
-      "success",
-      `Sent ${parsed.valid.length} invite(s) for event ${req.params.eventID}, skipped ${parsed.skipped.length}`,
-    );
-
-    return res.json({
-      sent: parsed.valid.length,
-      skipped: parsed.skipped.length,
-      skippedReasons: parsed.skipped.map((s) => `Row ${s.row}: ${s.reason}`),
-    });
+  },
+  // Catches multer errors (bad mimetype, file too large) from
+  // csvUpload.single() above so they return this route's JSON error
+  // contract instead of Express's default HTML error page.
+  (err: Error, _req: Request, res: Response, _next: NextFunction) => {
+    return res.status(400).json({ errors: [{ message: err.message }] });
   },
 );
 
