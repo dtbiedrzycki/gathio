@@ -1,0 +1,31 @@
+<div class="modal fade" id="rsvpConfirmModal" tabindex="-1" role="dialog" aria-labelledby="rsvpConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="rsvpConfirmModalLabel"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="rsvpConfirmModalDescription"></p>
+        <div class="form-group" id="rsvpConfirmModalSecretLink" style="display:none;">
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>{{t "views.event.saveyourlink" }}</strong>
+          </div>
+          <label for="rsvpSecretLink">{{t "views.event.yoursecretlink" }}</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="rsvpSecretLink" readonly>
+            <div class="input-group-append">
+              <button class="button button--secondary" type="button" id="copyRsvpLink"><i class="fas fa-copy"></i> {{t "common.copy" }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="button button--primary" data-dismiss="modal">{{t "views.event.rsvpconfirmdismiss" }}</button>
+      </div>
+    </div>
+  </div>
+</div>

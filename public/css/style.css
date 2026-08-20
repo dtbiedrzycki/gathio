@@ -886,6 +886,10 @@ li.hidden-attendee .attendee-name {
   color: #28a745;
 }
 
+.rsvp-bar__status--declined {
+  color: #dc3545;
+}
+
 @media (max-width: 1199.98px) {
   .edit-buttons {
     text-align: left;
@@ -1087,4 +1091,33 @@ img.group-preview__image {
 article.static-page header {
   margin-bottom: 1rem;
   border-bottom: 1px solid #e0e0e0;
+}
+
+/* MODALS */
+
+/* Bootstrap's default .modal-dialog only ever gets a top margin, so on a
+   short mobile viewport it sits flush near the top of the screen instead
+   of centering. Give every modal the same vertical centering .modal-
+   dialog-centered would (see bootstrap.min.css), without requiring that
+   modifier class on each template. */
+.modal-dialog {
+  display: flex;
+  align-items: center;
+  min-height: calc(100% - 1rem);
+}
+
+@media (min-width: 576px) {
+  .modal-dialog {
+    min-height: calc(100% - 3.5rem);
+  }
+}
+
+.modal-content {
+  /* Clip the header/footer's own smaller default radius (hardcoded to
+     0.3rem in bootstrap.min.css) to this larger radius instead of
+     overriding each of them individually. */
+  overflow: hidden;
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }

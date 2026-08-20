@@ -327,7 +327,7 @@ describe("Events", () => {
     cy.get("#event-group").should("contain.text", "Test Group");
   });
 
-  it("removes you from the event with a one-click unattend link", function () {
+  it("declines your RSVP after confirming the emailed unattend link", function () {
     cy.get("button#attendEvent").click();
     cy.get("#attendModal").should("be.visible");
     cy.get("#attendModal").should("have.focus");
@@ -351,13 +351,22 @@ describe("Events", () => {
           .update(removalPassword)
           .digest("hex");
         const unattendLink = `/event/${this.eventID}/unattend/${removalPasswordHash}`;
-        cy.visit(unattendLink);
-        cy.get("#event__message").should(
+        cy.visit(unattendLink, {
+          onBeforeLoad(win) {
+            win.localStorage.clear();
+          },
+        });
+        // The link only lands on a confirmation page (GET must stay
+        // side-effect-free, e.g. for email link-prefetch scanners) - the
+        // actual decline happens on the confirm button's POST, so this is
+        // a two-step confirm, not a one-click action.
+        cy.get("button#rsvpConfirmButton").click();
+        cy.url().should("include", `?p=`);
+        cy.get(".rsvp-bar__status").should(
           "contain.text",
-          "You have been removed from this event.",
+          "You said you can't attend",
         );
         cy.get("#attendees-alert").should("contain.text", "10 spots remaining");
-        cy.get("#eventAttendees").should("contain.text", "No attendees yet!");
       });
   });
   describe("Query string editing tokens", function () {

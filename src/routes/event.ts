@@ -793,8 +793,41 @@ router.delete(
   },
 );
 
-// Used to one-click unattend an event from an email.
+// One-click links from email are GET requests, which mail clients and
+// security scanners (Microsoft Defender Safe Links, Gmail's link proxy,
+// corporate mail gateways) routinely prefetch to scan for malware - a GET
+// that mutates data would fire on that prefetch, before the recipient ever
+// clicks anything. So the GET here only renders a confirmation page; the
+// actual decline happens on the POST the page's own button submits.
 router.get(
+  "/event/:eventID/unattend/:removalPasswordHash",
+  async (req: Request, res: Response) => {
+    const event = await Event.findOne({ id: req.params.eventID });
+    if (!event) {
+      return res.redirect("/404");
+    }
+    const attendee = event.attendees?.find(
+      (o) =>
+        hashString(o.removalPassword || "") === req.params.removalPasswordHash,
+    );
+    if (!attendee) {
+      return res.redirect(`/${req.params.eventID}`);
+    }
+    return res.render("eventRsvpConfirm", {
+      ...frontendConfig(res),
+      title: event.name,
+      eventID: event.id,
+      confirmTitle: i18next.t("views.rsvpconfirm.declinetitle"),
+      confirmDescription: i18next.t("views.rsvpconfirm.declinedesc", {
+        eventName: event.name,
+      }),
+      confirmButtonLabel: i18next.t("views.rsvpconfirm.declinebutton"),
+      formAction: `/event/${event.id}/unattend/${req.params.removalPasswordHash}`,
+    });
+  },
+);
+
+router.post(
   "/event/:eventID/unattend/:removalPasswordHash",
   async (req: Request, res: Response) => {
     // Find the attendee by the unattendPasswordHash
@@ -809,23 +842,108 @@ router.get(
     if (!attendee) {
       return res.redirect(`/${req.params.eventID}`);
     }
-    // Remove the attendee from the event
-    event.attendees = event.attendees?.filter(
-      (o) => o.removalPassword !== attendee.removalPassword,
-    );
+    // Mark the attendee as declined rather than deleting their record
+    attendee.status = "declined";
+    event.markModified("attendees");
     await event.save();
     // Send email to the attendee
     if (attendee.email) {
       req.emailService.sendEmailFromTemplate({
         to: attendee.email,
-        subject: `You have been removed from ${event.name}`,
-        templateName: "unattendEvent",
+        subject: i18next.t("routes.declineeventattendeesubject"),
+        templateName: "declineEvent",
         templateData: {
-          event,
+          eventID: req.params.eventID,
+          eventName: event.name,
+          removalPassword: attendee.removalPassword,
         },
       });
     }
-    return res.redirect(`/${req.params.eventID}?m=unattend`);
+    addToLog(
+      "declineEventAttendee",
+      "success",
+      `Attendee declined event ${req.params.eventID} via one-click link`,
+    );
+    return res.redirect(
+      `/${req.params.eventID}?p=${encodeURIComponent(attendee.removalPassword || "")}&m=rsvpdeclined`,
+    );
+  },
+);
+
+// One-click full data erasure from an email, as opposed to the unattend
+// link above which only declines. Removes the attendee record entirely.
+// Same GET-renders-confirmation / POST-mutates split as the unattend
+// route above, for the same reason (GET must stay safe to prefetch).
+router.get(
+  "/event/:eventID/erase/:removalPasswordHash",
+  async (req: Request, res: Response) => {
+    const event = await Event.findOne({ id: req.params.eventID });
+    if (!event) {
+      return res.redirect("/404");
+    }
+    const attendee = event.attendees?.find(
+      (o) =>
+        hashString(o.removalPassword || "") === req.params.removalPasswordHash,
+    );
+    if (!attendee) {
+      return res.redirect(`/${req.params.eventID}`);
+    }
+    return res.render("eventRsvpConfirm", {
+      ...frontendConfig(res),
+      title: event.name,
+      eventID: event.id,
+      confirmTitle: i18next.t("views.rsvpconfirm.erasetitle"),
+      confirmDescription: i18next.t("views.rsvpconfirm.erasedesc", {
+        eventName: event.name,
+      }),
+      confirmButtonLabel: i18next.t("views.rsvpconfirm.erasebutton"),
+      formAction: `/event/${event.id}/erase/${req.params.removalPasswordHash}`,
+      // The confirm page's HTML <form> can only submit GET/POST, but
+      // erasure is a deletion, so once JS is confirmed available (this is
+      // a normal webpage the email link navigates to, not the email body
+      // itself - mail clients strip <script> from email HTML, not from
+      // pages their links point to) it uses axios.delete() for the
+      // correct verb instead of a plain form POST.
+      useAxiosDelete: true,
+    });
+  },
+);
+
+router.delete(
+  "/event/:eventID/erase/:removalPasswordHash",
+  async (req: Request, res: Response) => {
+    const event = await Event.findOne({ id: req.params.eventID });
+    if (!event) {
+      return res.status(404).json({ error: "Event not found." });
+    }
+    const attendee = event.attendees?.find(
+      (o) =>
+        hashString(o.removalPassword || "") === req.params.removalPasswordHash,
+    );
+    if (!attendee) {
+      return res.status(404).json({ error: "Attendee not found." });
+    }
+    const attendeeEmail = attendee.email;
+    await Event.updateOne(
+      { id: req.params.eventID },
+      { $pull: { attendees: { removalPassword: attendee.removalPassword } } },
+    );
+    if (attendeeEmail) {
+      await req.emailService.sendEmailFromTemplate({
+        to: attendeeEmail,
+        subject: i18next.t("routes.removeeventattendeesubject"),
+        templateName: "unattendEvent",
+        templateData: {
+          eventID: req.params.eventID,
+        },
+      });
+    }
+    addToLog(
+      "eraseEventAttendee",
+      "success",
+      `Attendee erased self from event ${req.params.eventID} via one-click link`,
+    );
+    return res.sendStatus(200);
   },
 );
 
@@ -837,7 +955,12 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     attendeeEmail,
     attendeeNumber,
     attendeeVisible,
+    attendeeStatus,
+    fullForm,
   } = req.body;
+
+  const targetStatus: "attending" | "declined" =
+    attendeeStatus === "declined" ? "declined" : "attending";
 
   if (!removalPassword) {
     return res.status(400).json({ error: "Removal password is required." });
@@ -856,32 +979,85 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Attendee not found." });
     }
 
-    // Check capacity - for approval-required events, only count approved attendees
-    if (event.maxAttendees !== null && event.maxAttendees !== undefined) {
-      const freeSpots = event.maxAttendees - getApprovedAttendeeCount(event);
-      if (attendeeNumber > freeSpots) {
-        return res.status(403).json({ error: "Not enough spots available." });
-      }
-    }
-
     // Check if this is the host adding an attendee (via edit token)
     const editToken = req.query.e || req.body.editToken;
     const isHostAdding = editToken && editToken === event.editToken;
 
+    if (targetStatus === "declined") {
+      // Declining: name only, no capacity check, no approval, no custom
+      // questions, no confirmation email (no email is ever collected).
+      const name = attendeeName || attendee.name;
+      if (!name) {
+        return res.status(400).json({ error: "Name is required." });
+      }
+      attendee.status = "declined";
+      attendee.name = name;
+
+      event.markModified("attendees");
+      await event.save();
+
+      addToLog(
+        "declineEventAttendee",
+        "success",
+        `Attendee declined event ${req.params.eventID}`,
+      );
+
+      if (isHostAdding) {
+        return res.redirect(`/${req.params.eventID}?e=${editToken}`);
+      }
+      return res.redirect(
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpdeclined`,
+      );
+    }
+
+    // targetStatus === "attending" — covers both the original full-form
+    // RSVP and a one-click "switch back to attending" toggle (which sends
+    // only removalPassword + attendeeStatus, no other fields). Fields not
+    // present in the request keep their existing value on the record.
+    const effectiveNumber =
+      attendeeNumber !== undefined
+        ? parseInt(attendeeNumber, 10) || 1
+        : attendee.number || 1;
+
+    // Check capacity - for approval-required events, only count approved attendees
+    if (event.maxAttendees !== null && event.maxAttendees !== undefined) {
+      const freeSpots = event.maxAttendees - getApprovedAttendeeCount(event);
+      if (effectiveNumber > freeSpots) {
+        return res.status(403).json({ error: "Not enough spots available." });
+      }
+    }
+
     // Collect answers to the event's custom questions. This is a plain form
     // POST, so a bad answer redirects with a message rather than serving raw
-    // JSON.
-    const answers = collectCustomQuestionAnswers(event, req.body);
-    if (answers === null) {
-      return res.redirect(`/${req.params.eventID}?m=badanswer`);
+    // JSON. Skipped entirely for a bare toggle (no question fields present in
+    // the body) so a one-click "switch back to attending" doesn't wipe out
+    // previously-submitted answers - collectCustomQuestionAnswers would
+    // otherwise happily return [] for a body with none of the expected keys.
+    // The real field name pattern, from collectCustomQuestionAnswers itself
+    // (src/routes/event.ts:79), is `customQuestionAnswer-${question.id}`.
+    const hasQuestionFields = Object.keys(req.body).some((key) =>
+      key.startsWith("customQuestionAnswer-"),
+    );
+    let answers = attendee.answers || [];
+    if (hasQuestionFields) {
+      const collected = collectCustomQuestionAnswers(event, req.body);
+      if (collected === null) {
+        return res.redirect(`/${req.params.eventID}?m=badanswer`);
+      }
+      answers = collected;
     }
 
     // Update attendee
     attendee.status = "attending";
-    attendee.name = attendeeName;
-    attendee.email = attendeeEmail;
-    attendee.number = parseInt(attendeeNumber, 10) || 1;
-    attendee.visibility = attendeeVisible ? "public" : "private";
+    attendee.name = attendeeName || attendee.name;
+    attendee.email =
+      attendeeEmail !== undefined ? attendeeEmail : attendee.email;
+    attendee.number = effectiveNumber;
+    attendee.visibility = fullForm
+      ? attendeeVisible
+        ? "public"
+        : "private"
+      : attendee.visibility || "public";
     attendee.answers = answers;
 
     // Auto-approve if host is adding, or if event doesn't require approval
@@ -938,12 +1114,13 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     }
 
     // Notify the host of the new RSVP, unless they added the attendee
-    // themselves
-    if (!isHostAdding) {
+    // themselves, or this is just a one-click toggle back to attending
+    // (no attendeeName present) rather than a genuinely new RSVP.
+    if (!isHostAdding && attendeeName) {
       await notifyHostOfNewAttendee({
         emailService: req.emailService,
         event,
-        attendeeName,
+        attendeeName: attendee.name,
         answers,
         logProcess: "addEventAttendee",
       });
@@ -961,7 +1138,7 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     } else {
       // No approval needed - just redirect with ?p
       return res.redirect(
-        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}`,
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpgoing`,
       );
     }
   } catch (e) {

@@ -251,6 +251,35 @@
   </div>
 </div>
 
+{{#if editingEnabled}}
+  {{#if numberOfDeclined}}
+    <div class="card mb-4" id="eventDeclined">
+      <h5 class="card-header">{{t "views.event.cantattend"}}
+        {{t "views.event.numberofcantattend"}}</h5>
+      <div class="card-body text-center">
+        <ul class="attendeesList">
+          {{#each declinedAttendees}}
+            <li
+              data-attendee-name="{{this.name}}"
+              data-attendee-id="{{this.id}}"
+            >
+              <span
+                class="attendee-avatar"
+                style="background-color: {{this.avatarColor}}"
+              >{{this.avatarLetter}}</span>
+              <span class="attendee-info">
+                <span class="attendee-info__main">
+                  <span class="attendee-name">{{this.name}}</span>
+                </span>
+              </span>
+            </li>
+          {{/each}}
+        </ul>
+      </div>
+    </div>
+  {{/if}}
+{{/if}}
+
 <div class="modal fade" id="attendModal" tabindex="-1" role="dialog" aria-labelledby="attendModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -261,6 +290,7 @@
         </button>
       </div>
       <form id="attendEventForm" action="/event/{{eventData.id}}/attendee" method="post">
+        <input type="hidden" name="fullForm" value="1">
         {{#if editingEnabled}}
         <input type="hidden" name="editToken" value="{{eventData.editToken}}">
         {{/if}}
@@ -321,7 +351,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form id="unattendEventForm" x-on:submit.prevent="fetch(`/event/attendee/{{eventData.id}}?${new URLSearchParams({ p: password }).toString()}`, { method: 'DELETE' }).then(response => response.ok ? window.location.reload() : response.json()).then(data => message = data)">
+      <form id="unattendEventForm" x-on:submit.prevent="fetch(`/event/attendee/{{eventData.id}}?${new URLSearchParams({ p: password }).toString()}`, { method: 'DELETE' }).then(response => response.ok ? window.location.href = '/{{eventData.id}}?m=rsvperased' : response.json().then(data => message = data))">
       <div class="modal-body">
         <div class="form-group">
           <label for="removalPassword" class="form-label">{{t "views.event.removepswd" }}</label>
@@ -334,6 +364,38 @@
         <button type="button" class="button button--secondary" data-dismiss="modal">{{t "common.close" }}</button>
         <button type="submit" class="button button--primary">{{t "views.event.removemyself" }}</button>
       </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="declineModal" tabindex="-1" role="dialog" aria-labelledby="declineModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="declineModalLabel">{{t "views.event.declineself" }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="declineEventForm" action="/event/{{eventData.id}}/attendee" method="post">
+        {{#if editingEnabled}}
+          <input type="hidden" name="editToken" value="{{eventData.editToken}}">
+        {{/if}}
+        <input type="hidden" name="attendeeStatus" value="declined">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="declineAttendeeName">{{t "views.event.attendeename" }}</label>
+            <div class="form-group">
+              <input type="text" class="form-control" id="declineAttendeeName" name="attendeeName" placeholder="{{t 'views.event.attendeenamedesc'}}" data-validation="required length" data-validation-length="1-30">
+            </div>
+          </div>
+          <input type="hidden" id="declineRemovalPassword" name="removalPassword">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="button button--secondary" data-dismiss="modal">{{t "common.close" }}</button>
+          <button type="submit" class="button button--primary">{{t "views.event.removeme" }}</button>
+        </div>
       </form>
     </div>
   </div>
@@ -368,19 +430,36 @@
         <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{t "views.event.addattendee" }}</button>
       {{/unless}}
     {{else}}
-      {{#if viewerRegistered}}
-        <span class="rsvp-bar__status">
-          {{#if viewerRegisteredUnapproved}}
-            <i class="fas fa-clock"></i> {{t "views.event.pendingapproval" }}
-          {{else}}
-            <i class="fas fa-check-circle"></i> {{t "views.event.youaregoing" }}
-          {{/if}}
+      {{#if viewerDeclined}}
+        <span class="rsvp-bar__status rsvp-bar__status--declined">
+          <i class="fas fa-times-circle"></i> {{t "views.event.youdeclined" }}
         </span>
-        <button type="button" id="unattendEvent" class="button button--secondary" data-toggle="modal" data-target="#unattendModal"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
+        <form id="reattendEventForm" action="/event/{{eventData.id}}/attendee" method="post" style="display:inline;">
+          <input type="hidden" name="removalPassword" id="reattendRemovalPassword">
+          <input type="hidden" name="attendeeStatus" value="attending">
+          <button type="submit" id="reattendEvent" class="button button--primary"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
+        </form>
+        <button type="button" id="deleteMyInfo" class="button button--outline-secondary button--sm" data-toggle="modal" data-target="#unattendModal">{{t "views.event.deletemyinfo" }}</button>
       {{else}}
-        {{#unless noMoreSpots}}
-          <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
-        {{/unless}}
+        {{#if viewerRegistered}}
+          <span class="rsvp-bar__status">
+            {{#if viewerRegisteredUnapproved}}
+              <i class="fas fa-clock"></i> {{t "views.event.pendingapproval" }}
+            {{else}}
+              <i class="fas fa-check-circle"></i> {{t "views.event.youaregoing" }}
+            {{/if}}
+          </span>
+          <form id="declineExistingForm" action="/event/{{eventData.id}}/attendee" method="post" style="display:inline;">
+            <input type="hidden" name="removalPassword" id="declineExistingRemovalPassword">
+            <input type="hidden" name="attendeeStatus" value="declined">
+            <button type="submit" id="declineExisting" class="button button--secondary"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
+          </form>
+        {{else}}
+          {{#unless noMoreSpots}}
+            <button type="button" id="attendEvent" class="button button--primary" data-event-id="{{eventData.id}}"><i class="fas fa-user-plus"></i> {{t "views.event.addme" }}</button>
+          {{/unless}}
+          <button type="button" id="declineEvent" class="button button--secondary" data-event-id="{{eventData.id}}"><i class="fas fa-user-times"></i> {{t "views.event.removeme" }}</button>
+        {{/if}}
       {{/if}}
     {{/if}}
   </div>
@@ -468,37 +547,7 @@
 </div>
 {{/if}}
 
-<div class="modal fade" id="rsvpSuccessModal" tabindex="-1" role="dialog" aria-labelledby="rsvpSuccessModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="rsvpSuccessModalLabel"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-warning">
-          <i class="fas fa-exclamation-triangle"></i>
-          <strong>{{t "views.event.saveyourlink" }}</strong>
-        </div>
-        <p id="rsvpModalDescription"></p>
-        <div class="form-group">
-          <label for="rsvpSecretLink">{{t "views.event.yoursecretlink" }}</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="rsvpSecretLink" readonly>
-            <div class="input-group-append">
-              <button class="button button--secondary" type="button" id="copyRsvpLink"><i class="fas fa-copy"></i> {{t "common.copy" }}</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="button button--primary" data-dismiss="modal">{{t "views.event.savedlink" }}</button>
-      </div>
-    </div>
-  </div>
-</div>
+{{> rsvpConfirmModal }}
 
 <div class="modal fade" id="editTokenModal" tabindex="-1" role="dialog" aria-labelledby="editTokenModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -655,16 +704,17 @@ window.eventData = {{{ json jsonData }}};
       history.replaceState(history.state, '', url.href);
     }
 
-    if (urlParams.has('m')) {
-      const messageType = urlParams.get('m');
-      if (messageType === 'rsvppending') {
-        // Show the save link modal for pending RSVPs (approval-required events only)
+    // Reusable dismissable confirmation modal (views/partials/rsvpConfirmModal.handlebars),
+    // shown after any RSVP state change via the ?m= query param. showSecretLink
+    // is only needed for the pending-approval case, where losing the link means
+    // losing the only way back to the RSVP.
+    function showRsvpConfirmModal({ title, description, showSecretLink }) {
+      $('#rsvpConfirmModalLabel').text(title);
+      $('#rsvpConfirmModalDescription').html(description);
+      if (showSecretLink) {
         const secretLink = window.location.origin + window.location.pathname + '?p=' + urlParams.get('p');
         $('#rsvpSecretLink').val(secretLink);
-        $('#rsvpSuccessModalLabel').text("{{t 'views.event.rsvppending' }}");
-        $('#rsvpModalDescription').text("{{{t 'views.event.rsvppendingdesc' }}}");
-
-        $('#rsvpSuccessModal').modal('show');
+        $('#rsvpConfirmModalSecretLink').show();
         new ClipboardJS('#copyRsvpLink', {
           target: function() {
             return document.getElementById('rsvpSecretLink');
@@ -676,6 +726,39 @@ window.eventData = {{{ json jsonData }}};
             $(this).html('<i class="fas fa-copy"></i> {{t "common.copy" }}');
           }, 3000);
         });
+      } else {
+        $('#rsvpConfirmModalSecretLink').hide();
+      }
+      $('#rsvpConfirmModal').modal('show');
+    }
+
+    const rsvpConfirmMessages = {
+      rsvpgoing: {
+        title: "{{{t 'views.event.rsvpgoing' }}}",
+        description: "{{{t 'views.event.rsvpgoingdesc' }}}",
+        showSecretLink: false,
+      },
+      rsvpdeclined: {
+        title: "{{{t 'views.event.rsvpdeclinedtitle' }}}",
+        description: "{{{t 'views.event.rsvpdeclineddesc' }}}",
+        showSecretLink: false,
+      },
+      rsvperased: {
+        title: "{{{t 'views.event.rsvperasedtitle' }}}",
+        description: "{{{t 'views.event.rsvperaseddesc' }}}",
+        showSecretLink: false,
+      },
+      rsvppending: {
+        title: "{{{t 'views.event.rsvppending' }}}",
+        description: "{{{t 'views.event.rsvppendingdesc' }}}",
+        showSecretLink: true,
+      },
+    };
+
+    if (urlParams.has('m')) {
+      const messageType = urlParams.get('m');
+      if (rsvpConfirmMessages[messageType]) {
+        showRsvpConfirmModal(rsvpConfirmMessages[messageType]);
       }
       url.searchParams.delete('m');
       history.replaceState(history.state, '', url.href);
@@ -720,7 +803,7 @@ window.eventData = {{{ json jsonData }}};
       $(this).html('<i class="fas fa-copy"></i> {{t "common.copied" }}');
       setTimeout(function(){ $("#copyAPLink").html('<i class="fas fa-copy"></i> {{t "common.copy" }}');}, 5000);
     })
-    $('#attendEvent').on('click', function(event) {
+    $('#attendEvent').on('click', function() {
       const modal = $('#attendModal');
       const eventID = $(this).attr('data-event-id');
       axios.post('/attendee/provision', {}, { params: { eventID }})
@@ -746,6 +829,37 @@ window.eventData = {{{ json jsonData }}};
           return false;
         });
     });
+    $('#declineEvent').on('click', function() {
+      const modal = $('#declineModal');
+      const eventID = $(this).attr('data-event-id');
+      axios.post('/attendee/provision', {}, { params: { eventID }})
+        .then((response) => {
+          modal.find('#declineRemovalPassword').val(response.data.removalPassword);
+          try {
+            const rpStore = JSON.parse(localStorage.getItem('gathioRemovalPasswords') || '{}');
+            rpStore[eventID] = response.data.removalPassword;
+            localStorage.setItem('gathioRemovalPasswords', JSON.stringify(rpStore));
+          } catch(e) { /* ignore persistence errors */ }
+          modal.modal();
+        })
+        .catch((error) => {
+          console.error(error);
+          alert('Failed to open the RSVP form');
+          return false;
+        });
+    });
+
+    // Toggling attending<->declined is a real form submit (not a JS
+    // fetch+reload) so the browser handles the navigation natively -
+    // JS-triggered location.reload()/replace() proved unreliable to
+    // detect in automated-browser environments. The removalPassword
+    // lives in the ?p= query param, not in the DOM, so it's copied into
+    // each form's hidden field synchronously on page load.
+    (function populateToggleFormPasswords(){
+      const removalPassword = new URLSearchParams(window.location.search).get('p');
+      if (!removalPassword) return;
+      $('#reattendRemovalPassword, #declineExistingRemovalPassword').val(removalPassword);
+    })();
 
       $('#verifyTokenForm').on('submit', function(e) {
         e.preventDefault();

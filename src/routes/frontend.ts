@@ -145,6 +145,7 @@ function resolveLocationAccess(
   viewerApprovedForLocation: boolean;
   viewerRegistered: boolean;
   viewerRegisteredUnapproved: boolean;
+  viewerDeclined: boolean;
   viewerAttendeeId: string | null;
   editingEnabled: boolean;
 } {
@@ -166,7 +167,8 @@ function resolveLocationAccess(
     const removalPassword = String(query.p);
     viewerAttendee = (event.attendees as AttendeeLite[] | undefined)?.find(
       (a: AttendeeLite) =>
-        a.removalPassword === removalPassword && a.status === "attending",
+        a.removalPassword === removalPassword &&
+        (a.status === "attending" || a.status === "declined"),
     );
   }
   const viewerAttendeeId: string | null = viewerAttendee
@@ -191,10 +193,12 @@ function resolveLocationAccess(
   const viewerRegistered = !!viewerAttendee;
   const viewerRegisteredUnapproved =
     !!viewerAttendee && !viewerAttendee.approved;
+  const viewerDeclined = viewerAttendee?.status === "declined";
   return {
     viewerApprovedForLocation,
     viewerRegistered,
     viewerRegisteredUnapproved,
+    viewerDeclined,
     viewerAttendeeId,
     editingEnabled,
   };
@@ -409,6 +413,7 @@ router.get("/:eventID", async (req: Request, res: Response) => {
       viewerApprovedForLocation,
       viewerRegistered,
       viewerRegisteredUnapproved,
+      viewerDeclined,
       viewerAttendeeId,
       editingEnabled,
     } = resolveLocationAccess(
@@ -534,6 +539,27 @@ router.get("/:eventID", async (req: Request, res: Response) => {
         .reduce((acc, a) => acc + (a.number || 1), 0);
     }
 
+    // Host-only list of attendees who declined. Never shown publicly or to
+    // other attendees - editingEnabled gates it the same way canApprove/
+    // canRemove gate the Attendees card's host actions.
+    const declinedAttendees: {
+      id: string;
+      name: string;
+      avatarLetter: string;
+      avatarColor: string;
+    }[] = editingEnabled
+      ? ((event.attendees as AttendeeLite[] | undefined) || [])
+          .filter((a) => a.status === "declined")
+          .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+          .map((a) => ({
+            id: (a._id || a.id) as string,
+            name: a.name,
+            avatarLetter: (a.name || "").charAt(0).toUpperCase(),
+            avatarColor: stringToColor(a.name),
+          }))
+      : [];
+    const numberOfDeclined = declinedAttendees.length;
+
     let spotsRemaining, noMoreSpots;
     if (event.maxAttendees) {
       spotsRemaining = event.maxAttendees - getApprovedAttendeeCount(event);
@@ -583,6 +609,9 @@ router.get("/:eventID", async (req: Request, res: Response) => {
         approveRegistrations: approveRegistrations,
         viewerRegistered,
         viewerRegisteredUnapproved,
+        viewerDeclined,
+        declinedAttendees,
+        numberOfDeclined,
         attendeesListHidden: canSeeOnlySelf,
         attendees,
         customQuestions,

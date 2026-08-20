@@ -18,7 +18,7 @@ function rsvpAsGuest(eventID: string, name: string) {
   cy.get("#attendModal").should("have.focus");
   cy.get("#attendeeName").type(name);
   cy.get("form#attendEventForm").submit();
-  cy.get("#rsvpSuccessModal", { timeout: 10000 }).should("be.visible");
+  cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
 }
 
 describe("Attendee Approval Feature", () => {
@@ -161,8 +161,8 @@ describe("Attendee Approval Feature", () => {
       cy.get("form#attendEventForm").submit();
 
       // Should show the pending RSVP modal
-      cy.get("#rsvpSuccessModal", { timeout: 10000 }).should("be.visible");
-      cy.get("#rsvpSuccessModalLabel").should(
+      cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+      cy.get("#rsvpConfirmModalLabel").should(
         "contain.text",
         "Awaiting approval",
       );
@@ -181,8 +181,8 @@ describe("Attendee Approval Feature", () => {
       cy.get("form#attendEventForm").submit();
 
       // Close modal
-      cy.get("#rsvpSuccessModal", { timeout: 10000 }).should("be.visible");
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
+      cy.get("#rsvpConfirmModal .close").click();
 
       // Attendee list should show hidden message
       cy.get(".hidden-section").should("contain.text", "hidden");
@@ -197,7 +197,7 @@ describe("Attendee Approval Feature", () => {
       cy.get<string>("@eventID").then((eventID) => {
         rsvpAsGuest(eventID, "Pending Guest");
       });
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
     });
 
     it("displays pending badge (.badge-warning)", function () {
@@ -236,7 +236,7 @@ describe("Attendee Approval Feature", () => {
       cy.get<string>("@eventID").then((eventID) => {
         rsvpAsGuest(eventID, "To Be Approved");
       });
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
     });
 
     it("approves via .approve-attendee click", function () {
@@ -280,7 +280,7 @@ describe("Attendee Approval Feature", () => {
       cy.get<string>("@eventID").then((eventID) => {
         rsvpAsGuest(eventID, "To Be Removed");
       });
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
     });
 
     it("removes via modal confirmation", function () {
@@ -329,7 +329,7 @@ describe("Attendee Approval Feature", () => {
         .then((link) => {
           cy.wrap(link).as("approvedGuestLink");
         });
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
 
       // Host approves the attendee
       cy.get<string>("@eventID").then((eventID) => {
@@ -376,7 +376,7 @@ describe("Attendee Approval Feature", () => {
       cy.get<string>("@eventID").then((eventID) => {
         rsvpAsGuest(eventID, "Approved Guest");
       });
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
 
       // Host approves them
       cy.get<string>("@eventID").then((eventID) => {
@@ -396,7 +396,7 @@ describe("Attendee Approval Feature", () => {
         .then((link) => {
           cy.wrap(link).as("unapprovedGuestLink");
         });
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
     });
 
     it("hides location even with ?p= link", function () {
@@ -445,7 +445,7 @@ describe("Attendee Approval Feature", () => {
     it("pending attendees don't count toward capacity", function () {
       // Add a pending attendee
       rsvpAsGuest(this.eventID, "Pending One");
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
 
       // Check capacity message - should still show 2 spots (pending doesn't count)
       cy.get("#attendees-alert").should("contain.text", "2 spots remaining");
@@ -454,7 +454,7 @@ describe("Attendee Approval Feature", () => {
     it("approved attendees count toward capacity", function () {
       // Add and approve an attendee
       rsvpAsGuest(this.eventID, "To Approve");
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
 
       // Approve them
       cy.visit(`/${this.eventID}?e=${this.editToken}`);
@@ -467,7 +467,7 @@ describe("Attendee Approval Feature", () => {
     it("blocks RSVPs when approved reach capacity", function () {
       // Add two attendees and approve both
       rsvpAsGuest(this.eventID, "First Approved");
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
 
       // Approve first
       cy.visit(`/${this.eventID}?e=${this.editToken}`);
@@ -475,7 +475,7 @@ describe("Attendee Approval Feature", () => {
 
       // Add second
       rsvpAsGuest(this.eventID, "Second Approved");
-      cy.get("#rsvpSuccessModal .close").click();
+      cy.get("#rsvpConfirmModal .close").click();
 
       // Approve second
       cy.visit(`/${this.eventID}?e=${this.editToken}`);
