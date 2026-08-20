@@ -30,6 +30,7 @@ type EmailTemplateName =
   | "editEvent"
   | "eventGroupUpdated"
   | "removeEventAttendee"
+  | "resendRemovalLink"
   | "subscribed"
   | "unattendEvent";
 

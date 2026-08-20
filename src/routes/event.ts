@@ -947,6 +947,55 @@ router.delete(
   },
 );
 
+// Re-sends an attendee's manage/decline/erase links by email, for anyone who
+// lost the link (different browser, cleared storage, etc). Always responds
+// with the same generic message regardless of whether the email matches an
+// attendee, so this can't be used to test which emails are RSVPed - same
+// anti-enumeration pattern as the magic-link create-event flow
+// (src/routes/magicLink.ts).
+router.post(
+  "/event/:eventID/resend-link",
+  async (req: Request, res: Response) => {
+    const email = req.body.email;
+    if (!email) {
+      return res.status(400).json({ error: "Please provide an email." });
+    }
+    const event = await Event.findOne({ id: req.params.eventID });
+    if (!event) {
+      return res.status(404).json({ error: "Event not found." });
+    }
+    const matches = event.attendees?.filter(
+      (a) =>
+        a.email?.toLowerCase() === email.toLowerCase() &&
+        a.status !== "provisioned",
+    );
+    for (const attendee of matches || []) {
+      if (!attendee.removalPassword) continue;
+      req.emailService.sendEmailFromTemplate({
+        to: email,
+        subject: i18next.t("routes.resendremovallinksubject", {
+          eventName: event.name,
+        }),
+        templateName: "resendRemovalLink",
+        templateData: {
+          eventID: req.params.eventID,
+          eventName: event.name,
+          removalPassword: attendee.removalPassword,
+          removalPasswordHash: hashString(attendee.removalPassword),
+        },
+      });
+    }
+    addToLog(
+      "resendRemovalLink",
+      "success",
+      `Resend-link requested for event ${req.params.eventID}`,
+    );
+    return res.json({
+      message: i18next.t("routes.resendremovallinksent"),
+    });
+  },
+);
+
 // Finalize attendance (convert provisioned attendee to attending)
 router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
   const {
@@ -1005,8 +1054,9 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
       if (isHostAdding) {
         return res.redirect(`/${req.params.eventID}?e=${editToken}`);
       }
+      const declinedNoEmailFlag = attendee.email ? "" : "&noemail=1";
       return res.redirect(
-        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpdeclined`,
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpdeclined${declinedNoEmailFlag}`,
       );
     }
 
@@ -1127,18 +1177,19 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     }
 
     // Redirect appropriately based on who is adding the attendee
+    const attendingNoEmailFlag = attendee.email ? "" : "&noemail=1";
     if (isHostAdding) {
       // Host added attendee - redirect back to edit view
       return res.redirect(`/${req.params.eventID}?e=${editToken}`);
     } else if (event.approveRegistrations) {
       // Approval required - show save link modal since location is hidden until approved
       return res.redirect(
-        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvppending`,
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvppending${attendingNoEmailFlag}`,
       );
     } else {
       // No approval needed - just redirect with ?p
       return res.redirect(
-        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpgoing`,
+        `/${req.params.eventID}?p=${encodeURIComponent(removalPassword)}&m=rsvpgoing${attendingNoEmailFlag}`,
       );
     }
   } catch (e) {
