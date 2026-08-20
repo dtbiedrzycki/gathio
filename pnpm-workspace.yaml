@@ -4,3 +4,10 @@ onlyBuiltDependencies:
   - cypress
 # Makes Cypress work in CI (cf. https://github.com/cypress-io/github-action/issues/1363)
 sideEffectsCache: false
+overrides:
+  form-data: ^4.0.6
+  axios: ^1.18.0
+  postcss: ^8.5.18
+  ts-deepmerge: ^8.0.0
+  tough-cookie: ^4.1.3
+  phin: ^3.7.1
