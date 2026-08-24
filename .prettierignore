@@ -1,6 +1,9 @@
 dist
 views
 pnpm-lock.yaml
+.claude
+.mcp.json
+.superpowers
 public/js/autosize.min.js
 public/js/bootstrap.bundle.js
 public/js/bootstrap.bundle.js.map

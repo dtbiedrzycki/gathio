@@ -1,9 +1,9 @@
 FROM node:22-alpine AS BUILD_IMAGE
 WORKDIR /app
 RUN apk add --no-cache python3 build-base
-ADD package.json pnpm-lock.yaml /app/
-RUN npm install -g pnpm
-RUN pnpm install --prod
+ADD package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
+RUN npm install -g pnpm@11.22.0
+RUN pnpm install --prod --frozen-lockfile
 COPY . /app/
 # Always exit 0 here because TSC will fail while we're migrating to TypeScript but
 # not everything uses TypeScript
