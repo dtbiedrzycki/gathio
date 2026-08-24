@@ -2,7 +2,8 @@ import { Router, Response, Request } from "express";
 import multer from "multer";
 import { generateEditToken, generateEventID } from "../util/generator.js";
 import { validateGroupData } from "../util/validation.js";
-import Jimp from "jimp";
+import { Jimp } from "jimp";
+import fs from "node:fs/promises";
 import { addToLog } from "../helpers.js";
 import EventGroup from "../models/EventGroup.js";
 import { marked } from "marked";
@@ -55,10 +56,9 @@ router.post(
       if (req.file?.buffer) {
         try {
           const img = await Jimp.read(req.file.buffer);
-          img
-            .resize(920, Jimp.AUTO) // resize
-            .quality(80) // set JPEG quality
-            .write("./public/events/" + groupID + ".jpg"); // save
+          img.resize({ w: 920 }); // resize
+          const buffer = await img.getBuffer("image/jpeg", { quality: 80 }); // set JPEG quality
+          await fs.writeFile("./public/events/" + groupID + ".jpg", buffer); // save
           groupImageFilename = groupID + ".jpg";
         } catch (err) {
           addToLog(
@@ -181,10 +181,9 @@ router.put(
       if (req.file?.buffer) {
         try {
           const img = await Jimp.read(req.file.buffer);
-          img
-            .resize(920, Jimp.AUTO) // resize
-            .quality(80) // set JPEG quality
-            .write(`./public/events/${eventGroupID}.jpg`); // save
+          img.resize({ w: 920 }); // resize
+          const buffer = await img.getBuffer("image/jpeg", { quality: 80 }); // set JPEG quality
+          await fs.writeFile(`./public/events/${eventGroupID}.jpg`, buffer); // save
         } catch (err) {
           addToLog(
             "Jimp",

@@ -5,7 +5,8 @@ import {
   type NextFunction,
 } from "express";
 import multer from "multer";
-import Jimp from "jimp";
+import { Jimp } from "jimp";
+import fs from "node:fs/promises";
 import moment from "moment-timezone";
 import {
   generateEditToken,
@@ -151,10 +152,9 @@ router.post(
     if (req.file?.buffer) {
       try {
         const img = await Jimp.read(req.file.buffer);
-        img
-          .resize(920, Jimp.AUTO) // resize
-          .quality(80) // set JPEG quality
-          .write("./public/events/" + eventID + ".jpg"); // save
+        img.resize({ w: 920 }); // resize
+        const buffer = await img.getBuffer("image/jpeg", { quality: 80 }); // set JPEG quality
+        await fs.writeFile("./public/events/" + eventID + ".jpg", buffer); // save
         eventImageFilename = eventID + ".jpg";
       } catch (err) {
         addToLog(
@@ -385,10 +385,9 @@ router.put(
       if (req.file?.buffer) {
         try {
           const img = await Jimp.read(req.file.buffer);
-          img
-            .resize(920, Jimp.AUTO) // resize
-            .quality(80) // set JPEG quality
-            .write(`./public/events/${eventID}.jpg`); // save
+          img.resize({ w: 920 }); // resize
+          const buffer = await img.getBuffer("image/jpeg", { quality: 80 }); // set JPEG quality
+          await fs.writeFile(`./public/events/${eventID}.jpg`, buffer); // save
         } catch (err) {
           addToLog(
             "Jimp",
