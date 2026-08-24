@@ -683,7 +683,7 @@ router.get("/unsubscribe/:eventGroupID", async (req, res) => {
   }
 });
 
-router.post("/post/comment/:eventID", (req, res) => {
+router.post("/post/comment/:eventID", async (req, res) => {
   const maxCommentLength = getMaxCommentLength(res.locals.config);
   const commentContent =
     typeof req.body.commentContent === "string" ? req.body.commentContent : "";
@@ -702,102 +702,83 @@ router.post("/post/comment/:eventID", (req, res) => {
     timestamp: moment(),
   };
 
-  Event.findOne(
-    {
+  try {
+    const event = await Event.findOne({
       id: req.params.eventID,
-    },
-    async function (err, event) {
-      if (err) {
-        res.send("Database error, please try again :(" + err);
-        addToLog(
-          "addEventComment",
-          "error",
-          "Attempt to add comment to event " +
-            req.params.eventID +
-            " failed with error: " +
-            err,
-        );
-        return;
-      }
-      if (!event) {
-        return res.sendStatus(404);
-      }
-      event.comments.push(newComment);
+    });
+    if (!event) {
+      return res.sendStatus(404);
+    }
+    event.comments.push(newComment);
+
+    await event.save();
+
+    addToLog(
+      "addEventComment",
+      "success",
+      "Comment added to event " + req.params.eventID,
+    );
+    // broadcast an identical message to all followers, will show in their home timeline
+    // and in the home timeline of the event
+    const guidObject = crypto.randomBytes(16).toString("hex");
+    const jsonObject = {
+      "@context": "https://www.w3.org/ns/activitystreams",
+      id: `https://${domain}/${req.params.eventID}/m/${guidObject}`,
+      name: `Comment on ${event.name}`,
+      type: "Note",
+      cc: "https://www.w3.org/ns/activitystreams#Public",
+      content: `<p>${req.body.commentAuthor} commented: ${req.body.commentContent}.</p><p><a href="https://${domain}/${req.params.eventID}/">See the full conversation here.</a></p>`,
+    };
+    broadcastCreateMessage(jsonObject, event.followers, req.params.eventID);
+
+    const attendeeEmails =
+      event.attendees
+        .filter((o) => o.status === "attending" && o.email)
+        .map((o) => o.email || "") || [];
+    if (attendeeEmails.length) {
+      console.log("Sending emails to: " + attendeeEmails);
 
       try {
-        await event.save();
-
-        addToLog(
-          "addEventComment",
-          "success",
-          "Comment added to event " + req.params.eventID,
-        );
-        // broadcast an identical message to all followers, will show in their home timeline
-        // and in the home timeline of the event
-        const guidObject = crypto.randomBytes(16).toString("hex");
-        const jsonObject = {
-          "@context": "https://www.w3.org/ns/activitystreams",
-          id: `https://${domain}/${req.params.eventID}/m/${guidObject}`,
-          name: `Comment on ${event.name}`,
-          type: "Note",
-          cc: "https://www.w3.org/ns/activitystreams#Public",
-          content: `<p>${req.body.commentAuthor} commented: ${req.body.commentContent}.</p><p><a href="https://${domain}/${req.params.eventID}/">See the full conversation here.</a></p>`,
-        };
-        broadcastCreateMessage(jsonObject, event.followers, req.params.eventID);
-        if (!event) {
-          return res.sendStatus(404);
-        }
-
-        const attendeeEmails =
-          event.attendees
-            .filter((o) => o.status === "attending" && o.email)
-            .map((o) => o.email || "") || [];
-        if (attendeeEmails.length) {
-          console.log("Sending emails to: " + attendeeEmails);
-
-          try {
-            await req.emailService.sendEmailFromTemplate({
-              to: event?.creatorEmail || config.general.email,
-              bcc: attendeeEmails,
-              subject: i18next.t("routes.addeventcommentsubject", {
-                eventName: event?.name,
-              }),
-              templateName: "addEventComment",
-              templateData: {
-                eventID: req.params.eventID,
-                commentAuthor: req.body.commentAuthor,
-              },
-            });
-          } catch (e) {
-            console.error(
-              "error sending removeEventAttendeeHtml email",
-              e.toString(),
-            );
-            res.status(500).end();
-          }
-        } else {
-          console.log("Nothing to send!");
-        }
-        res.writeHead(302, {
-          Location: "/" + req.params.eventID,
+        await req.emailService.sendEmailFromTemplate({
+          to: event?.creatorEmail || config.general.email,
+          bcc: attendeeEmails,
+          subject: i18next.t("routes.addeventcommentsubject", {
+            eventName: event?.name,
+          }),
+          templateName: "addEventComment",
+          templateData: {
+            eventID: req.params.eventID,
+            commentAuthor: req.body.commentAuthor,
+          },
         });
-        res.end();
-      } catch (err) {
-        res.send("Database error, please try again :(" + err);
-        addToLog(
-          "addEventComment",
-          "error",
-          "Attempt to add comment to event " +
-            req.params.eventID +
-            " failed with error: " +
-            err,
+      } catch (e) {
+        console.error(
+          "error sending removeEventAttendeeHtml email",
+          e.toString(),
         );
+        res.status(500).end();
       }
-    },
-  );
+    } else {
+      console.log("Nothing to send!");
+    }
+    res.writeHead(302, {
+      Location: "/" + req.params.eventID,
+    });
+    res.end();
+  } catch (err) {
+    res.send("Database error, please try again :(" + err);
+    addToLog(
+      "addEventComment",
+      "error",
+      "Attempt to add comment to event " +
+        req.params.eventID +
+        " failed with error: " +
+        err,
+    );
+  }
 });
 
-router.post("/post/reply/:eventID/:commentID", (req, res) => {
+router.post("/post/reply/:eventID/:commentID", async (req, res) => {
   const maxCommentLength = getMaxCommentLength(res.locals.config);
   const replyContent =
     typeof req.body.replyContent === "string" ? req.body.replyContent : "";
@@ -816,91 +797,87 @@ router.post("/post/reply/:eventID/:commentID", (req, res) => {
     content: replyContent,
     timestamp: moment(),
   };
-  Event.findOne(
-    {
+  try {
+    const event = await Event.findOne({
       id: req.params.eventID,
-    },
-    async function (err, event) {
-      if (!event) {
-        return res.sendStatus(404);
-      }
-      var parentComment = event.comments.id(commentID);
-      parentComment.replies.push(newReply);
+    });
+    if (!event) {
+      return res.sendStatus(404);
+    }
+    var parentComment = event.comments.id(commentID);
+    parentComment.replies.push(newReply);
+
+    await event.save();
+
+    addToLog(
+      "addEventReply",
+      "success",
+      "Reply added to comment " +
+        commentID +
+        " in event " +
+        req.params.eventID,
+    );
+    // broadcast an identical message to all followers, will show in their home timeline
+    const guidObject = crypto.randomBytes(16).toString("hex");
+    const jsonObject = {
+      "@context": "https://www.w3.org/ns/activitystreams",
+      id: `https://${domain}/${req.params.eventID}/m/${guidObject}`,
+      name: `Comment on ${event.name}`,
+      type: "Note",
+      cc: "https://www.w3.org/ns/activitystreams#Public",
+      content: `<p>${req.body.replyAuthor} commented: ${req.body.replyContent}</p><p><a href="https://${domain}/${req.params.eventID}/">See the full conversation here.</a></p>`,
+    };
+    broadcastCreateMessage(jsonObject, event.followers, req.params.eventID);
+    // NB: don't declare a new `event` in this block - the shadowing
+    // `const` puts the earlier `event.save()` in its temporal dead zone,
+    // which made every reply fail (#250)
+    const attendeeEmails =
+      event.attendees
+        .filter((o) => o.status === "attending" && o.email)
+        .map((o) => o.email || "") || [];
+    if (attendeeEmails.length) {
+      console.log("Sending emails to: " + attendeeEmails);
 
       try {
-        await event.save();
-
-        addToLog(
-          "addEventReply",
-          "success",
-          "Reply added to comment " +
-            commentID +
-            " in event " +
-            req.params.eventID,
-        );
-        // broadcast an identical message to all followers, will show in their home timeline
-        const guidObject = crypto.randomBytes(16).toString("hex");
-        const jsonObject = {
-          "@context": "https://www.w3.org/ns/activitystreams",
-          id: `https://${domain}/${req.params.eventID}/m/${guidObject}`,
-          name: `Comment on ${event.name}`,
-          type: "Note",
-          cc: "https://www.w3.org/ns/activitystreams#Public",
-          content: `<p>${req.body.replyAuthor} commented: ${req.body.replyContent}</p><p><a href="https://${domain}/${req.params.eventID}/">See the full conversation here.</a></p>`,
-        };
-        broadcastCreateMessage(jsonObject, event.followers, req.params.eventID);
-        // NB: don't declare a new `event` in this block - the shadowing
-        // `const` puts the earlier `event.save()` in its temporal dead zone,
-        // which made every reply fail (#250)
-        const attendeeEmails =
-          event.attendees
-            .filter((o) => o.status === "attending" && o.email)
-            .map((o) => o.email || "") || [];
-        if (attendeeEmails.length) {
-          console.log("Sending emails to: " + attendeeEmails);
-
-          try {
-            await req.emailService.sendEmailFromTemplate({
-              to: event?.creatorEmail || config.general.email,
-              bcc: attendeeEmails,
-              subject: i18next.t("routes.addeventcommentsubject", {
-                eventName: event.name,
-              }),
-              templateName: "addEventComment",
-              templateData: {
-                eventID: req.params.eventID,
-                commentAuthor: req.body.replyAuthor,
-              },
-            });
-          } catch (e) {
-            console.error(
-              "error sending removeEventAttendeeHtml email",
-              e.toString(),
-            );
-            res.status(500).end();
-          }
-        } else {
-          console.log("Nothing to send!");
-        }
-        res.writeHead(302, {
-          Location: "/" + req.params.eventID,
+        await req.emailService.sendEmailFromTemplate({
+          to: event?.creatorEmail || config.general.email,
+          bcc: attendeeEmails,
+          subject: i18next.t("routes.addeventcommentsubject", {
+            eventName: event.name,
+          }),
+          templateName: "addEventComment",
+          templateData: {
+            eventID: req.params.eventID,
+            commentAuthor: req.body.replyAuthor,
+          },
         });
-        res.end();
-      } catch (err) {
-        res.send("Database error, please try again :(");
-        addToLog(
-          "addEventReply",
-          "error",
-          "Attempt to add reply to comment " +
-            commentID +
-            " in event " +
-            req.params.eventID +
-            " failed with error: " +
-            err,
+      } catch (e) {
+        console.error(
+          "error sending removeEventAttendeeHtml email",
+          e.toString(),
         );
+        res.status(500).end();
       }
-    },
-  );
+    } else {
+      console.log("Nothing to send!");
+    }
+    res.writeHead(302, {
+      Location: "/" + req.params.eventID,
+    });
+    res.end();
+  } catch (err) {
+    res.send("Database error, please try again :(");
+    addToLog(
+      "addEventReply",
+      "error",
+      "Attempt to add reply to comment " +
+        commentID +
+        " in event " +
+        req.params.eventID +
+        " failed with error: " +
+        err,
+    );
+  }
 });
 
 router.post(
