@@ -346,7 +346,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form id="unattendEventForm" x-on:submit.prevent="fetch(`/event/attendee/{{eventData.id}}?${new URLSearchParams({ p: password }).toString()}`, { method: 'DELETE' }).then(response => response.ok ? window.location.href = '/{{eventData.id}}?m=rsvperased' : response.json().then(data => message = data))">
+      <form id="unattendEventForm" x-on:submit.prevent="fetch(`/event/attendee/{{eventData.id}}?${new URLSearchParams({ p: password }).toString()}`, { method: 'DELETE' }).then(response => response.ok ? (gathioClearAttendeeInfo('{{eventData.id}}'), window.location.href = '/{{eventData.id}}?m=rsvperased') : response.json().then(data => message = data))">
       <div class="modal-body">
         <p>{{t "views.event.unattendconfirmdesc" }}</p>
         <div x-bind:class="{ 'alert-danger': message?.error, 'alert-success': message?.success }" class="alert" x-text="message?.error || message?.success" x-show="message?.error || message?.success"></div>
@@ -604,6 +604,17 @@
 
 <script>
 window.eventData = {{{ json jsonData }}};
+// Clears this event's locally-remembered name/removal-password so a
+// visitor who deletes their info isn't locked into the old name.
+window.gathioClearAttendeeInfo = function(eventID) {
+  ['gathioAttendeeNames', 'gathioRemovalPasswords'].forEach(function(key) {
+    try {
+      const store = JSON.parse(localStorage.getItem(key) || '{}');
+      delete store[eventID];
+      localStorage.setItem(key, JSON.stringify(store));
+    } catch(e) { /* ignore */ }
+  });
+};
 </script>
 
 <script>
@@ -915,6 +926,37 @@ window.eventData = {{{ json jsonData }}};
     $('#deleteEvent').on('click', function() {
         $('#editModal').modal('hide');
     });
+
+    // Persist the attendee's name (from RSVP/decline) across name fields on
+    // this page so the same visitor can't post comments/replies under a
+    // different name. Mirrors the gathioRemovalPasswords pattern above.
+    (function persistAttendeeName(){
+      const eventID = $('#eventName').attr('data-event-id');
+      if (!eventID) return;
+
+      function storeName(name) {
+        if (!name) return;
+        try {
+          const nameStore = JSON.parse(localStorage.getItem('gathioAttendeeNames') || '{}');
+          nameStore[eventID] = name;
+          localStorage.setItem('gathioAttendeeNames', JSON.stringify(nameStore));
+        } catch(e) { /* ignore persistence errors */ }
+      }
+
+      $('#attendEventForm, #declineEventForm').on('submit', function() {
+        storeName($(this).find('input[name="attendeeName"]').val());
+      });
+
+      try {
+        const nameStore = JSON.parse(localStorage.getItem('gathioAttendeeNames') || '{}');
+        const storedName = nameStore[eventID];
+        if (storedName) {
+          $('input[name="attendeeName"], input[name="commentAuthor"], input[name="replyAuthor"]')
+            .val(storedName)
+            .attr('readonly', true);
+        }
+      } catch(e) { /* ignore */ }
+    })();
 
     // Auto-append ?p if stored and missing (not in editing mode)
     (function autoAppendRemovalPassword(){
