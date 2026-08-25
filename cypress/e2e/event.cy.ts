@@ -3,6 +3,24 @@ import crypto from "crypto";
 
 const toDatetimeLocalUTC = (date: Date) => date.toISOString().slice(0, 16);
 
+// The RSVP confirmation modal's Bootstrap fade-out transition doesn't
+// resolve reliably in the Cypress/Electron test runner (neither a real
+// click nor a direct .modal('hide') call ever clears it within the
+// command timeout), so force it straight to its hidden end-state instead
+// of waiting on the animation. This test isn't exercising that modal's
+// own behavior, just clearing it out of the way.
+function dismissRsvpConfirmModal() {
+  cy.get("#rsvpConfirmModal").should("be.visible");
+  cy.window().then((win) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const $ = (win as any).jQuery;
+    $("#rsvpConfirmModal").removeClass("show").css("display", "none");
+    $(".modal-backdrop").remove();
+    $("body").removeClass("modal-open");
+  });
+  cy.get("#rsvpConfirmModal").should("not.be.visible");
+}
+
 describe("Events", () => {
   beforeEach(() => {
     cy.visit("/new");
@@ -120,6 +138,89 @@ describe("Events", () => {
       .should("contain.text", "Reply Author")
       .and("contain.text", "Test Reply");
     cy.contains("Database error").should("not.exist");
+  });
+
+  it("persists the attendee's name across comment and reply forms after RSVP", function () {
+    // beforeEach created this event as the host, which cached the edit
+    // token in localStorage. Submitting the attend form in that state
+    // is treated server-side as the host adding themselves (isHostAdding),
+    // which skips the RSVP confirmation redirect this test relies on.
+    // Clear it to attend as a plain visitor instead.
+    cy.visit(`/${this.eventID}`, {
+      onBeforeLoad(win) {
+        win.localStorage.clear();
+      },
+    });
+
+    cy.get("button#attendEvent").click();
+    cy.get("#attendModal").should("be.visible");
+    cy.get("#attendModal").should("have.focus");
+    cy.get("#attendeeName").type("Test Attendee");
+    cy.get("form#attendEventForm").submit();
+
+    // Attending pops a "save your link" confirmation modal that covers
+    // the page until dismissed.
+    dismissRsvpConfirmModal();
+
+    // The comment author field should be prefilled with the RSVP'd name
+    // and locked against editing.
+    cy.get("#commentAuthor")
+      .should("have.value", "Test Attendee")
+      .and("have.attr", "readonly");
+
+    cy.get("#commentContent").type("Test Comment");
+    cy.get("#postComment").click();
+    cy.get(".comment").should("contain.text", "Test Attendee");
+
+    cy.get(".comment .openReplyBox").first().click();
+    cy.get(".comment #replyAuthor")
+      .should("have.value", "Test Attendee")
+      .and("have.attr", "readonly");
+  });
+
+  it("clears the persisted name when the attendee deletes their info", function () {
+    // beforeEach created this event as the host, which cached the edit
+    // token in localStorage and would otherwise auto-re-append ?e= on
+    // every visit, keeping the page in host/edit mode (no decline
+    // button there). Clear it to view the page as a plain visitor,
+    // same technique as the emailed-unattend-link test above.
+    cy.visit(`/${this.eventID}`, {
+      onBeforeLoad(win) {
+        win.localStorage.clear();
+      },
+    });
+
+    cy.get("button#declineEvent").click();
+    cy.get("#declineModal").should("be.visible");
+    cy.get("#declineModal").should("have.focus");
+    cy.get("#declineAttendeeName").type("Test Decliner");
+    cy.get("form#declineEventForm").submit();
+
+    // Declining pops a "save your link" confirmation modal that covers
+    // the page until dismissed.
+    dismissRsvpConfirmModal();
+
+    cy.get("#commentAuthor")
+      .should("have.value", "Test Decliner")
+      .and("have.attr", "readonly");
+
+    cy.get("button#deleteMyInfo").click();
+    cy.get("#unattendModal").should("be.visible");
+    cy.get("#unattendEventForm button[type=submit]").click();
+
+    // Erasure pops the same confirmation modal; dismiss it before
+    // interacting with the page underneath again.
+    dismissRsvpConfirmModal();
+
+    // With the stored name cleared, the decline form should be empty and
+    // editable again rather than locked to the old name.
+    cy.get("button#declineEvent").click();
+    cy.get("#declineModal").should("be.visible");
+    cy.get("#declineAttendeeName")
+      .should("have.value", "")
+      .and("not.have.attr", "readonly");
+    cy.get("#declineAttendeeName").type("New Name");
+    cy.get("#declineAttendeeName").should("have.value", "New Name");
   });
 
   it("rejects comments longer than the configured limit", function () {
