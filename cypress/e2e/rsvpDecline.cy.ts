@@ -54,6 +54,11 @@ describe("RSVP Decline", () => {
       "contain.text",
       "You said you can't attend",
     );
+    // The "save your link" modal covers the bar until closed; Bootstrap
+    // ignores the close click until its fade-in has finished
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("have.focus");
+    cy.get("#rsvpConfirmModal .close").click();
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("not.be.visible");
     // The other actions sit behind the bar's Change button
     cy.get("button#changeRsvp").click();
     cy.get("button#reattendEvent").should("be.visible");

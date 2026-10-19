@@ -51,6 +51,15 @@ function addAttendee(eventID: string, name: string, visible = true) {
   });
 }
 
+// Declining pops a "save your link" modal over the page. Bootstrap only
+// moves focus onto it once its fade-in finishes, and the close click is
+// ignored before then.
+function closeRsvpConfirmModal() {
+  cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("have.focus");
+  cy.get("#rsvpConfirmModal .close").click();
+  cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("not.be.visible");
+}
+
 describe("Guest view", () => {
   beforeEach(() => {
     cy.viewport(375, 812);
@@ -253,6 +262,7 @@ describe("Guest view", () => {
       cy.get("#declineModal").should("have.focus");
       cy.get("#declineAttendeeName").type("Cannot Come");
       cy.get("form#declineEventForm").submit();
+      closeRsvpConfirmModal();
       cy.get("button#changeRsvp").click();
       cy.get("button#reattendEvent").should("be.visible");
       cy.get("button#deleteMyInfo").should("be.visible");
@@ -294,6 +304,7 @@ describe("Guest view", () => {
       cy.get("#declineModal").should("have.focus");
       cy.get("#declineAttendeeName").type("Cannot Come");
       cy.get("form#declineEventForm").submit();
+      closeRsvpConfirmModal();
       cy.get("#changeRsvp")
         .should("have.text", "Change")
         .and("have.attr", "aria-expanded", "false");
