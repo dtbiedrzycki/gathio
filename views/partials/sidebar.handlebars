@@ -1,13 +1,10 @@
 <div class="sidebar-sticky-wrapper">
     <h1><a href="/">gathio</a></h1>
 
+    {{#if showPublicEventList}}
     <ul id="sidebar__nav">
-        {{#if showCreateEventButton}}
-            <li><a class="button button--primary" href="/new"><i class="far fa-calendar-plus"></i> {{t "views.partials.sidebar.createevent" }}</a></li>
-        {{/if}}
-        {{#if showPublicEventList}}
-            <li><a href="/events">{{t "views.partials.sidebar.events" }}</a></li>
-            <li><a href="/about">{{t "views.partials.sidebar.about" }}</a></li>
-        {{/if}}
+        <li><a href="/events">{{t "views.partials.sidebar.events" }}</a></li>
+        <li><a href="/about">{{t "views.partials.sidebar.about" }}</a></li>
     </ul>
+    {{/if}}
 </div>

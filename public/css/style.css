@@ -380,28 +380,29 @@ label {
 
 /* LAYOUT */
 
+/* One phone-width column at every screen size: the top bar, then the page */
+
 html {
   width: 100%;
 }
 
 body {
-  background: var(--color-grey-97);
+  background: #fff;
 }
 
 body > #container {
   min-height: 100vh;
   width: 100%;
-  max-width: 75rem;
-  display: grid;
+  max-width: 42rem;
+  display: flex;
+  flex-direction: column;
   margin: 0 auto;
-  grid-template-columns: 1fr;
-  grid-template-rows: min-content auto;
   padding: 0;
 }
 
 #container > #content {
+  flex-grow: 1;
   overflow: hidden;
-  border: 1px solid var(--color-grey-90);
   background: #fff;
   display: flex;
   flex-direction: column;
@@ -435,60 +436,50 @@ body > #container {
 }
 
 @media (min-width: 768px) {
+  body {
+    background: var(--color-grey-97);
+  }
   body > #container {
-    padding: 1rem;
-    grid-template-columns: 1fr 4fr;
-    grid-template-rows: auto;
-    gap: 1rem;
+    padding: 0 1rem 1rem;
   }
   #container > #content {
-    border-radius: 1rem;
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-grey-90);
+    border-radius: var(--radius-lg);
   }
   #container > #content > main.page {
     padding: 2rem;
   }
 }
 
-@media (min-width: 992px) {
-  body > #container {
-    grid-template-columns: 1fr 5fr;
-  }
-}
+/* TOP BAR (kept as #sidebar so older selectors still match) */
 
-/* SIDEBAR */
+#sidebar .sidebar-sticky-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 1rem;
+}
 
 #sidebar h1 {
   font-family: "Fredoka", sans-serif;
   font-weight: 700;
   font-optical-sizing: auto;
   font-style: normal;
-  text-align: center;
   letter-spacing: -0.5px;
-  font-size: 3rem;
-  color: transparent !important;
-  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  line-height: 1;
+  margin: 0;
 }
 
 #sidebar h1 a {
-  background: rgb(69, 69, 69);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent !important;
+  color: var(--color-grey-30);
+  text-decoration: none;
 }
 
 #sidebar h1 a:hover {
-  text-decoration: none;
-  background: linear-gradient(
-    to right,
-    rgb(1, 76, 173),
-    rgb(128, 224, 200),
-    var(--color-purple)
-  );
-  background-size: 100% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent !important;
+  color: var(--color-purple-dark);
 }
 
 ul#sidebar__nav {
@@ -496,43 +487,17 @@ ul#sidebar__nav {
   margin: 0;
   list-style: none;
   display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
+  gap: 1rem;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-}
-
-ul#sidebar__nav li {
-  padding: 0 1rem 0.5rem 1rem;
-  text-align: center;
 }
 
 ul#sidebar__nav a {
-  display: block;
-  width: 100%;
+  color: var(--color-grey-40);
+  font-weight: 500;
 }
 
-@media (min-width: 768px) {
-  #sidebar {
-    padding-top: 1rem;
-  }
-  ul#sidebar__nav {
-    flex-direction: column;
-  }
-  ul#sidebar__nav li {
-    width: 100%;
-    padding: 0 0 0.5rem 0;
-  }
-  ul#sidebar__nav li:has(a:not(.button)):not(:last-child) {
-    border-bottom: 1px solid var(--color-grey-90);
-  }
-
-  .sidebar-sticky-wrapper {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 1rem;
-  }
+ul#sidebar__nav a:hover {
+  color: var(--color-purple-dark);
 }
 
 /* EVENTS */
