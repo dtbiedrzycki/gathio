@@ -68,6 +68,9 @@
 </ul>
 
 <div class="quick-actions" role="group" aria-label="Event actions">
+  <button type="button" id="shareEvent" class="button button--outline-secondary button--sm" aria-controls="sharePanel" aria-expanded="false" data-share-title="{{eventData.name}}" data-share-url="https://{{domain}}/{{eventData.id}}">
+    <i class="fas fa-share-alt"></i> {{t "views.event.sharebutton" }}
+  </button>
   <a href="http://www.google.com/calendar/event?action=TEMPLATE&dates={{parsedStart}}%2F{{parsedEnd}}&text={{escapedName}}&location={{calendarLocationParam}}&ctz={{timezone}}" class="button button--outline-secondary button--sm">
     <i class="far fa-calendar-plus"></i> {{t "views.event.addtoGC" }}
   </a>
@@ -79,9 +82,6 @@
       <i class="fas fa-map-marked"></i> {{t "views.event.showonGM" }}
     </a>
   {{/if}}
-  <button type="button" id="shareEvent" class="button button--outline-secondary button--sm" aria-controls="sharePanel" data-share-title="{{eventData.name}}" data-share-url="https://{{domain}}/{{eventData.id}}">
-    <i class="fas fa-share-alt"></i> {{t "views.event.sharebutton" }}
-  </button>
   {{#unless editingEnabled}}
     <button type="button" id="editEvent" class="quick-actions__edit" {{#if eventHasConcluded}}disabled{{/if}} data-event-id="{{eventData.id}}" data-toggle="modal" data-target="#editTokenModal"><i class="fas fa-edit"></i> {{t "views.eventgroup.editmode" }}</button>
   {{/unless}}

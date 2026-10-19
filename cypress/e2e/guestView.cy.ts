@@ -66,8 +66,11 @@ describe("Guest view", () => {
       cy.get("#sidebar").then(($s) => {
         expect($s[0].getBoundingClientRect().height).to.be.lessThan(80);
       });
-      cy.get("#content").then(($c) => {
-        expect($c[0].getBoundingClientRect().width).to.equal(375);
+      cy.document().then((d) => {
+        const viewportWidth = d.documentElement.clientWidth;
+        cy.get("#content").then(($c) => {
+          expect($c[0].getBoundingClientRect().width).to.equal(viewportWidth);
+        });
       });
     });
   });
@@ -111,6 +114,14 @@ describe("Guest view", () => {
       cy.document().then((d) => {
         expect(d.documentElement.scrollWidth).to.be.at.most(375);
       });
+      // #content clips overflow, so also check the long text itself fits
+      ["#eventName", ".event-fact:last-child .event-fact__text"].forEach(
+        (sel) => {
+          cy.get(sel).then(($el) => {
+            expect($el[0].scrollWidth).to.be.at.most($el[0].clientWidth);
+          });
+        },
+      );
     });
   });
   describe("Facts and sharing", () => {
@@ -119,8 +130,12 @@ describe("Guest view", () => {
     it("keeps the public link out of the facts until Share is used", function () {
       cy.visit(`/${this.eventID}`, {
         onBeforeLoad(win) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          delete (win.navigator as any).share;
+          // share may live on Navigator.prototype, so shadow it rather than
+          // deleting it
+          Object.defineProperty(win.navigator, "share", {
+            value: undefined,
+            configurable: true,
+          });
         },
       });
       cy.get("#sharePanel").should("not.be.visible");

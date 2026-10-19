@@ -1055,89 +1055,6 @@ main.event .h-event > .event-section {
 }
 
 .attendee-name {
-  flex-shrink: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attendeesList > li .attendee-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex-shrink: 0;
-  margin-left: auto;
-  min-height: 2rem;
-}
-
-.attendeesList > li.hidden-attendee a {
-  color: var(--color-grey-40);
-}
-
-.attendeesList > li.hidden-attendee .attendee-avatar {
-  opacity: 0.6;
-}
-
-.attendeesList > li.hidden-attendees-item {
-  justify-content: flex-start;
-  font-size: 0.9em;
-}
-
-.expand {
-  -webkit-transition: height 0.2s;
-  -moz-transition: height 0.2s;
-  transition: height 0.2s;
-}
-
-.eventInformation {
-  margin-left: 1.6em;
-}
-
-.eventInformation > li {
-  margin-bottom: 0.8em;
-}
-
-.hidden-section {
-  color: var(--color-grey-50);
-  border: 1px dashed var(--color-grey-70);
-  border-radius: var(--radius-sm);
-  display: flex;
-  gap: 5px;
-  flex-direction: column;
-  padding: 5px;
-  background-color: var(--color-grey-97);
-}
-
-#copyEventLink {
-  margin-left: 5px;
-}
-
-.commentContainer {
-  background: var(--color-grey-99);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid var(--color-grey-85);
-}
-
-.replyContainer {
-  display: none;
-  background: var(--color-grey-95);
-  padding: 10px;
-  border-radius: 0 0 5px 5px;
-  border-bottom: 1px solid var(--color-grey-80);
-  border-left: 1px solid var(--color-grey-80);
-  border-right: 1px solid var(--color-grey-80);
-  width: 95%;
-  margin: -10px auto 10px auto;
-}
-
-.repliesContainer {
-  font-size: smaller;
-  padding-left: 20px;
-}
-
-.attendee-name {
   color: var(--color--black);
 }
 
@@ -1202,6 +1119,8 @@ li.hidden-attendee .attendee-name {
 }
 
 .rsvp-bar__status {
+  /* A full row of its own, so the button beside it keeps a readable width */
+  flex-basis: 100%;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
