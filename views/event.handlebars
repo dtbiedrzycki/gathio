@@ -470,8 +470,7 @@
       </div>
     </form>
     {{#if eventData.comments}}
-      <hr style="border-style:dashed;">
-      <div class="container commentsList">
+      <div class="commentsList">
       {{#each eventData.comments}}
         <div class="comment">
           <div class="row commentContainer">
@@ -483,7 +482,6 @@
               {{/if}}
               <p>{{this.content}}</p>
               {{#if this.replies}}
-                <hr>
                 <div class="repliesContainer">
                   {{#each this.replies}}
                     <p class="mb-0"><strong><i class="fas fa-reply text-muted"></i> {{this.author}}</strong> <small class="commentTimestamp text-muted">{{this.timestamp}}</small></p>
@@ -492,13 +490,13 @@
                 </div>
               {{/if}}
             </div>
-            <div class="col-lg-3 commentMetadata text-right">
-              <button type="button" class="button button--outline button--sm openReplyBox">
+            <div class="col-lg-3 commentMetadata">
+              <button type="button" class="comment-action openReplyBox">
                 <i class="fas fa-comment"></i> {{t "views.event.reply" }}
               </button>
               {{#if ../editingEnabled}}
                 <form class="d-inline" action="/deletecomment/{{../eventData.id}}/{{this._id}}/{{../eventData.editToken}}" method="post">
-                  <button type="submit" class="button button--outline button--sm deleteComment">
+                  <button type="submit" class="comment-action deleteComment">
                     <i class="fas fa-trash"></i> {{t "views.del" }}
                   </button>
                 </form>

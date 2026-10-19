@@ -247,4 +247,20 @@ describe("Guest view", () => {
       });
     });
   });
+  describe("Discussion", () => {
+    beforeEach(() => createEvent());
+
+    it("shows comments without boxes", function () {
+      cy.visit(`/${this.eventID}`);
+      cy.get("#commentAuthor").type("Asha");
+      cy.get("#commentContent").type("Bringing cake");
+      cy.get("#postComment").click();
+      cy.visit(`/${this.eventID}`);
+      cy.get(".commentContainer")
+        .first()
+        .should("have.css", "border-top-width", "0px")
+        .and("have.css", "background-color", "rgba(0, 0, 0, 0)");
+      cy.get(".openReplyBox").first().should("be.visible");
+    });
+  });
 });
