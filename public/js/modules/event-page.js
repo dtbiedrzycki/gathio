@@ -8,25 +8,28 @@
     const shareButton = document.getElementById("shareEvent");
     const sharePanel = document.getElementById("sharePanel");
     if (shareButton && sharePanel) {
-      const openPanel = () => {
-        sharePanel.hidden = false;
-        shareButton.setAttribute("aria-expanded", "true");
+      const setPanel = (open) => {
+        sharePanel.hidden = !open;
+        shareButton.setAttribute("aria-expanded", String(open));
       };
+      // Phones and tablets get their own share sheet; with a mouse, the
+      // panel's link and Copy buttons are more useful
+      const isTouch =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(pointer: coarse)").matches;
       shareButton.addEventListener("click", () => {
-        // Prefer the phone's own share sheet; fall back to the panel when it
-        // isn't available or the guest dismisses it
-        if (typeof navigator.share === "function") {
+        if (!sharePanel.hidden) {
+          setPanel(false);
+        } else if (isTouch && typeof navigator.share === "function") {
+          // Fall back to the panel if the guest dismisses the sheet
           navigator
             .share({
               title: shareButton.dataset.shareTitle,
               url: shareButton.dataset.shareUrl,
             })
-            .catch(openPanel);
-        } else if (sharePanel.hidden) {
-          openPanel();
+            .catch(() => setPanel(true));
         } else {
-          sharePanel.hidden = true;
-          shareButton.setAttribute("aria-expanded", "false");
+          setPanel(true);
         }
       });
     }

@@ -60,6 +60,20 @@ function closeRsvpConfirmModal() {
   cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("not.be.visible");
 }
 
+// Makes the page believe it's on a touch screen, where Share uses the
+// device's own share sheet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function pretendTouch(win: any) {
+  win.matchMedia = (query: string) => ({
+    matches: query === "(pointer: coarse)",
+    media: query,
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+  });
+}
+
 describe("Guest view", () => {
   beforeEach(() => {
     cy.viewport(375, 812);
@@ -157,9 +171,10 @@ describe("Guest view", () => {
       cy.get("#copyEventLink").should("be.visible");
     });
 
-    it("uses the native share sheet when available", function () {
+    it("uses the native share sheet on touch screens", function () {
       cy.visit(`/${this.eventID}`, {
         onBeforeLoad(win) {
+          pretendTouch(win);
           Object.defineProperty(win.navigator, "share", {
             value: cy.stub().as("share").resolves(),
             configurable: true,
@@ -176,9 +191,27 @@ describe("Guest view", () => {
       cy.get("#sharePanel").should("not.be.visible");
     });
 
+    it("toggles the panel on desktop even when native share exists", function () {
+      cy.visit(`/${this.eventID}`, {
+        onBeforeLoad(win) {
+          Object.defineProperty(win.navigator, "share", {
+            value: cy.stub().as("share").resolves(),
+            configurable: true,
+          });
+        },
+      });
+      cy.get("#shareEvent").click();
+      cy.get("#sharePanel").should("be.visible");
+      cy.get("#shareEvent").should("have.attr", "aria-expanded", "true");
+      cy.get("#shareEvent").click();
+      cy.get("#sharePanel").should("not.be.visible");
+      cy.get("@share").should("not.have.been.called");
+    });
+
     it("opens the panel when the share sheet is cancelled", function () {
       cy.visit(`/${this.eventID}`, {
         onBeforeLoad(win) {
+          pretendTouch(win);
           Object.defineProperty(win.navigator, "share", {
             value: cy.stub().rejects(new DOMException("cancel", "AbortError")),
             configurable: true,
