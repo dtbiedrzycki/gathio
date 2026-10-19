@@ -16,6 +16,16 @@ describe("Groups", () => {
     cy.get("#eventGroupEditToken").should("contain.text", this.editToken);
   });
 
+  it("doesn't send the creator's email to guests", function () {
+    // Forget the host's stored edit token so the page loads as a guest
+    cy.clearLocalStorage();
+    cy.visit(`/group/${this.groupID}`);
+    cy.window().its("groupData").should("not.have.property", "creatorEmail");
+    cy.document()
+      .its("documentElement.innerHTML")
+      .should("not.contain", groupData.creatorEmail);
+  });
+
   it("edits a group", function () {
     cy.get("#editGroup").click();
 

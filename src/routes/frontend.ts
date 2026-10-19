@@ -652,7 +652,8 @@ router.get("/:eventID", async (req: Request, res: Response) => {
           timezone: event.timezone,
           url: event.url,
           hostName: event.hostName,
-          creatorEmail: event.creatorEmail,
+          // Only the host's edit form needs this; guests never see it
+          creatorEmail: editingEnabled ? event.creatorEmail : undefined,
           showOnPublicList: event.showOnPublicList,
           eventGroupID: event.eventGroup
             ? (event.eventGroup as unknown as IEventGroup).id
@@ -802,7 +803,7 @@ router.get("/group/:eventGroupID", async (req: Request, res: Response) => {
         description: eventGroup.description,
         url: eventGroup.url,
         hostName: eventGroup.hostName,
-        creatorEmail: eventGroup.creatorEmail,
+        creatorEmail: editingEnabled ? eventGroup.creatorEmail : undefined,
         image: eventGroup.image,
         editToken: editingEnabled ? eventGroupEditToken : null,
         showOnPublicList: eventGroup.showOnPublicList,

@@ -84,6 +84,23 @@ describe("Events", () => {
     );
   });
 
+  it("doesn't send the creator's email to guests", function () {
+    // Forget the host's stored edit token so the page loads as a guest
+    cy.clearLocalStorage();
+    cy.visit(`/${this.eventID}`);
+    cy.window().its("eventData").should("not.have.property", "creatorEmail");
+    cy.document()
+      .its("documentElement.innerHTML")
+      .should("not.contain", eventData.creatorEmail);
+  });
+
+  it("still gives the host their email in the edit form", function () {
+    cy.visit(`/${this.eventID}?${this.editToken}`);
+    cy.window()
+      .its("eventData.creatorEmail")
+      .should("eq", eventData.creatorEmail);
+  });
+
   it("allows you to attend an event - visible in public list", function () {
     cy.get("button#attendEvent").click();
     cy.get("#attendModal").should("be.visible");
@@ -128,6 +145,10 @@ describe("Events", () => {
     cy.get("#commentContent").type("Test Comment");
     cy.get("#postComment").click();
     cy.get(".comment").should("contain.text", "Test Comment");
+    // Posting lands on the plain event URL, then the page re-verifies the
+    // stored edit token and reloads with ?e=; let that settle before
+    // opening the reply box, or the reload closes it again
+    cy.url().should("include", this.editToken);
 
     cy.get(".comment .openReplyBox").first().click();
     cy.get(".comment #replyAuthor").type("Reply Author");
@@ -216,6 +237,8 @@ describe("Events", () => {
     // editable again rather than locked to the old name.
     cy.get("button#declineEvent").click();
     cy.get("#declineModal").should("be.visible");
+    // As above, wait for the fade-in to finish before typing
+    cy.get("#declineModal").should("have.focus");
     cy.get("#declineAttendeeName")
       .should("have.value", "")
       .and("not.have.attr", "readonly");
@@ -377,6 +400,9 @@ describe("Events", () => {
     const startedEventEnd = toDatetimeLocalUTC(new Date(Date.now() + oneHour));
 
     cy.get("#editEvent").click();
+    // Bootstrap moves focus onto the modal when its fade-in finishes; typing
+    // before then loses whatever is typed after that focus change
+    cy.get("#editModal").should("have.focus");
 
     cy.get("#editEventForm #eventName").focus();
     cy.get("#editEventForm #eventName").clear();
