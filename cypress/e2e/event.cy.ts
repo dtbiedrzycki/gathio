@@ -84,6 +84,23 @@ describe("Events", () => {
     );
   });
 
+  it("doesn't send the creator's email to guests", function () {
+    // Forget the host's stored edit token so the page loads as a guest
+    cy.clearLocalStorage();
+    cy.visit(`/${this.eventID}`);
+    cy.window().its("eventData").should("not.have.property", "creatorEmail");
+    cy.document()
+      .its("documentElement.innerHTML")
+      .should("not.contain", eventData.creatorEmail);
+  });
+
+  it("still gives the host their email in the edit form", function () {
+    cy.visit(`/${this.eventID}?${this.editToken}`);
+    cy.window()
+      .its("eventData.creatorEmail")
+      .should("eq", eventData.creatorEmail);
+  });
+
   it("allows you to attend an event - visible in public list", function () {
     cy.get("button#attendEvent").click();
     cy.get("#attendModal").should("be.visible");
