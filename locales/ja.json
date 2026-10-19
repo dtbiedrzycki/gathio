@@ -196,7 +196,6 @@
   "views.event.replycontent": "返信の内容は？",
   "views.event.share": "イベントを共有するには、このメッセージのすぐ上に表示しているリンクをご利用ください。参加者にはイベントを編集したり削除したりすることはできません。",
   "views.event.showonGM": "Google マップで表示",
-  "views.event.showonOM": "OpenStreetMap で表示",
   "views.event.started": "開催中",
   "views.event.welcome": "イベントを作成しました。ようこそ！",
   "views.event.currentlyediting": "現在イベントの編集用ページを開いています。Web ブラウザのアドレス欄の URL は公開してはいけません！",

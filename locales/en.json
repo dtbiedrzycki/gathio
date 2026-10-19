@@ -268,7 +268,6 @@
   "views.event.replycontent": "What would you like to reply?",
   "views.event.share": "To share your event, use the link you can see just above this message - that way your attendees won't be able to edit or delete your event!",
   "views.event.showonGM": "Show on Google Maps",
-  "views.event.showonOM": "Show on OpenStreetMap",
   "views.event.started": "Started",
   "views.event.welcome": "Welcome to your event!",
   "views.event.currentlyediting": "You are currently editing this event. Do not share this link!",

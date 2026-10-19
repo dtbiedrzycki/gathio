@@ -355,7 +355,6 @@ describe("Attendee Approval Feature", () => {
 
       // Map buttons should be visible
       cy.contains("Google Maps").should("be.visible");
-      cy.contains("OpenStreetMap").should("be.visible");
     });
 
     it("shows full attendee list", function () {
@@ -412,7 +411,6 @@ describe("Attendee Approval Feature", () => {
 
       // Map buttons should not be visible
       cy.contains("Google Maps").should("not.exist");
-      cy.contains("OpenStreetMap").should("not.exist");
     });
 
     it("shows only own name", function () {
