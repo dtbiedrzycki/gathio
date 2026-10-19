@@ -691,14 +691,6 @@ ul#sidebar__nav a:hover {
   text-transform: capitalize;
 }
 
-#eventFromNow {
-  padding-left: 25px;
-}
-
-#eventFromNow::first-letter {
-  text-transform: capitalize;
-}
-
 /* Page sections: separated by a tinted band rather than boxed in cards */
 .event-section {
   border-top: var(--band);
@@ -715,8 +707,6 @@ main.event .h-event > .event-section {
   margin-inline: -1rem;
 }
 
-.event-title + .event-facts,
-.quick-actions + .event-section,
 .share-panel + .event-section {
   margin-top: 1.25rem;
 }
@@ -804,7 +794,6 @@ main.event .h-event > .event-section {
   gap: 0.5rem;
 }
 
-#event__actions #editEvent,
 #event__actions #editGroup {
   width: 100%;
   margin-top: 16px;
@@ -1047,10 +1036,6 @@ li.hidden-attendee .attendee-name {
   color: var(--color-danger);
 }
 
-.edit-buttons {
-  text-align: right;
-}
-
 /* Room below the footer so the pinned RSVP bar never covers the end of
    the page */
 /* Same ids as the layout's own footer rule, which would otherwise win */
@@ -1146,12 +1131,6 @@ li.hidden-attendee .attendee-name {
 .rsvp-bar__link:focus-visible {
   outline: 2px solid var(--color-purple-dark);
   outline-offset: 2px;
-}
-
-@media (max-width: 1199.98px) {
-  .edit-buttons {
-    text-align: left;
-  }
 }
 
 .code {

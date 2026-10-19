@@ -456,7 +456,6 @@
 {{#if eventData.usersCanComment}}
 <section class="event-section" id="eventComments">
   <h3 class="event-section__title">{{t "views.event.discussion" }}</h3>
-  <div>
     <form id="commentForm" action="/post/comment/{{eventData.id}}/" method="post">
       <label for="commentAuthor">{{t "views.event.commentauthor" }}</label>
       <div class="form-group">
@@ -527,7 +526,6 @@
       {{/each}}
       </div>
     {{/if}}
-  </div>
 </section>
 {{/if}}
 
