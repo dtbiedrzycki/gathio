@@ -124,6 +124,13 @@ async function initializeApp() {
       json: function (context: object) {
         return JSON.stringify(context);
       },
+      // The first few attendees guests may see, for the Who's going avatar row
+      avatarStack: function (
+        attendees: { isHidden?: boolean }[] | undefined,
+        max: number,
+      ) {
+        return (attendees || []).filter((a) => !a.isHidden).slice(0, max);
+      },
       firstLetter: function (name: string) {
         // Get the first letter of a name for avatar display
         return name ? name.charAt(0).toUpperCase() : "?";

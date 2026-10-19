@@ -218,6 +218,8 @@
   "views.event.editlater": "You can always edit it later.",
   "views.event.ended": "Ended",
   "views.event.hidden": "(hidden from public list)",
+  "views.event.goingcount_one": "{{count}} going",
+  "views.event.goingcount_other": "{{count}} going",
   "views.event.hiddenattendee_one": "{{count}} hidden attendee",
   "views.event.hiddenattendee_other": "{{count}} hidden attendees",
   "views.event.hiddenattendee_zero": "No hidden attendee",

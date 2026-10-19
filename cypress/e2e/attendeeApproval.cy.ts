@@ -360,6 +360,8 @@ describe("Attendee Approval Feature", () => {
     it("shows full attendee list", function () {
       visitFresh(this.approvedGuestLink as string);
 
+      // Who's going starts collapsed for guests
+      cy.get("#attendeesToggle").click();
       cy.get(".attendeesList").should("be.visible");
       cy.get(".attendeesList").should("contain.text", "Approved Guest");
       // Should not show "attendees hidden" message

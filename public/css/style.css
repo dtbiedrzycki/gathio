@@ -714,6 +714,98 @@ ul#sidebar__nav a:hover {
   text-transform: capitalize;
 }
 
+/* Page sections: separated by a tinted band rather than boxed in cards */
+.event-section {
+  border-top: var(--band);
+  padding-block: 1.25rem;
+}
+
+/* The section bands run edge to edge inside the page's side margins */
+main.event .event-section {
+  margin-inline: -1rem;
+  padding-inline: 1rem;
+}
+
+.event-title + .event-facts,
+.quick-actions + .event-section,
+.share-panel + .event-section {
+  margin-top: 1.25rem;
+}
+
+.event-section__title {
+  font-family: "Fredoka", sans-serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin: 0 0 0.75rem;
+}
+
+.p-summary > :last-child {
+  margin-bottom: 0;
+}
+
+/* Who's going: overlapping avatars and a count that expand the full list */
+.attendees-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.25rem 0;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.attendees-toggle:focus-visible {
+  outline: 2px solid var(--color-purple-dark);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.avatar-stack {
+  display: flex;
+}
+
+.avatar-stack .attendee-avatar {
+  border: 2px solid #fff;
+  box-sizing: content-box;
+}
+
+.avatar-stack .attendee-avatar + .attendee-avatar {
+  margin-left: -0.5rem;
+}
+
+.attendees-toggle__count {
+  font-weight: 600;
+}
+
+.attendees-toggle__chevron {
+  margin-left: auto;
+  color: var(--color-grey-50);
+  transition: transform var(--transition);
+}
+
+.attendees-toggle[aria-expanded="true"] .attendees-toggle__chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attendees-toggle__chevron {
+    transition: none;
+  }
+}
+
+.attendees-capacity {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-warning-ink);
+}
+
+#attendeesListWrap {
+  margin-top: 0.5rem;
+}
+
 .attendeesList {
   margin: 0;
   padding: 0;
@@ -731,20 +823,17 @@ ul#sidebar__nav a:hover {
 
 .attendeesList > li {
   display: flex;
-  /* Top-aligned so the avatar and actions stay put on tall cards (e.g. with
+  /* Top-aligned so the avatar and actions stay put on tall rows (e.g. with
      custom question answers); the first row's 2rem min-height keeps
-     single-line cards looking vertically centered */
+     single-line rows looking vertically centered */
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--color-grey-97);
-  border-radius: 0.375rem;
-  border: 1px solid var(--color-grey-90);
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-grey-90);
 }
 
 .attendeesList > li.hidden-attendee {
-  background: #e9ecef;
-  border-style: dashed;
+  opacity: 0.85;
 }
 
 .attendee-avatar {
@@ -852,9 +941,7 @@ ul#sidebar__nav a:hover {
 }
 
 .attendeesList > li.hidden-attendees-item {
-  justify-content: center;
-  background: var(--color-grey-97);
-  border-style: dashed;
+  justify-content: flex-start;
   font-size: 0.9em;
 }
 
@@ -1211,4 +1298,10 @@ article.static-page header {
   border: none;
   border-radius: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+main.event .badge-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-ink);
+  font-weight: 600;
 }

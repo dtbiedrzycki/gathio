@@ -120,25 +120,38 @@
   <p>{{{t "views.event.share" }}}</p>
 </div>
 {{/if}}
-<div class="card mb-4" id="eventDescription">
-  <h5 class="card-header">{{t "views.event.about" }}</h5>
-  <div class="card-body p-summary">
+<section class="event-section" id="eventDescription">
+  <h2 class="event-section__title">{{t "views.event.about" }}</h2>
+  <div class="p-summary">
     {{{parsedDescription}}}
   </div>
-</div>
+</section>
 
 {{#if eventData.usersCanAttend}}
-<div class="card mb-4" id="eventAttendees">
-  <h5 class="card-header">{{t "views.event.attendees" }} {{#if numberOfAttendees}}{{t "views.event.numberofattende" }}{{/if}}</h5>
-  <div class="card-body text-center">
+<section class="event-section" id="eventAttendees">
+  <h2 class="event-section__title">{{t "views.event.attendees" }}</h2>
+    {{#if numberOfAttendees}}
+      {{#unless attendeesListHidden}}
+        <button type="button" id="attendeesToggle" class="attendees-toggle" aria-controls="attendeesListWrap" aria-expanded="{{#if editingEnabled}}true{{else}}false{{/if}}">
+          <span class="avatar-stack" aria-hidden="true">
+            {{#each (avatarStack attendees 5)}}
+              <span class="attendee-avatar" style="background-color: {{this.avatarColor}}">{{this.avatarLetter}}</span>
+            {{/each}}
+          </span>
+          <span class="attendees-toggle__count">{{plural "views.event.goingcount" numberOfAttendees }}</span>
+          <i class="fas fa-chevron-down attendees-toggle__chevron" aria-hidden="true"></i>
+        </button>
+      {{/unless}}
+    {{/if}}
     {{#if eventData.maxAttendees}}
       {{#if noMoreSpots}}
-        <div class="alert alert-warning text-center" id="attendees-alert">{{t "views.event.capacity" }}</div>
+        <p class="attendees-capacity" id="attendees-alert">{{t "views.event.capacity" }}</p>
       {{else}}
-        <div class="alert alert-warning text-center" id="attendees-alert">{{plural "views.event.remaining" spotsRemaining }}</div>
+        <p class="attendees-capacity" id="attendees-alert">{{plural "views.event.remaining" spotsRemaining }}</p>
       {{/if}}
     {{/if}}
     {{#if numberOfAttendees}}
+      <div id="attendeesListWrap" {{#unless attendeesListHidden}}{{#unless editingEnabled}}hidden{{/unless}}{{/unless}}>
       <ul class="attendeesList">
         {{#each attendees}}
           {{!-- Skip hidden attendees for non-editors --}}
@@ -210,6 +223,7 @@
           {{/unless}}
         {{/unless}}
       </ul>
+      </div>
       {{#if attendeesListHidden}}
         <div class="hidden-section mt-3">
           <span><i class="fas fa-lock"></i> {{t "views.event.attendees_hidden" }}</span>
@@ -217,22 +231,20 @@
       {{/if}}
     {{else}}
       {{#if viewerApprovedForLocation}}
-        <p class="text-center text-muted mb-0">{{t "views.event.noattendees" }}</p>
+        <p class="text-muted mb-0">{{t "views.event.noattendees" }}</p>
       {{else}}
       <div class="hidden-section">
         <span><i class="fas fa-lock"></i> {{t "views.event.attendees_hidden" }}</span>
       </div>
       {{/if}}
     {{/if}}
-  </div>
-</div>
+</section>
 
 {{#if editingEnabled}}
   {{#if numberOfDeclined}}
-    <div class="card mb-4" id="eventDeclined">
-      <h5 class="card-header">{{t "views.event.cantattend"}}
-        {{t "views.event.numberofcantattend"}}</h5>
-      <div class="card-body text-center">
+    <section class="event-section" id="eventDeclined">
+      <h2 class="event-section__title">{{t "views.event.cantattend"}}
+        {{t "views.event.numberofcantattend"}}</h2>
         <ul class="attendeesList">
           {{#each declinedAttendees}}
             <li
@@ -251,8 +263,7 @@
             </li>
           {{/each}}
         </ul>
-      </div>
-    </div>
+    </section>
   {{/if}}
 {{/if}}
 
@@ -436,9 +447,9 @@
 
 
 {{#if eventData.usersCanComment}}
-<div class="card mb-4" id="eventComments">
-  <h5 class="card-header">{{t "views.event.discussion" }}</h5>
-  <div class="card-body">
+<section class="event-section" id="eventComments">
+  <h2 class="event-section__title">{{t "views.event.discussion" }}</h2>
+  <div>
     <form id="commentForm" action="/post/comment/{{eventData.id}}/" method="post">
       <label for="commentAuthor">{{t "views.event.commentauthor" }}</label>
       <div class="form-group">
@@ -512,7 +523,7 @@
       </div>
     {{/if}}
   </div>
-</div>
+</section>
 {{/if}}
 
 {{> rsvpConfirmModal }}

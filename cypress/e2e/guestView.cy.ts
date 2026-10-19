@@ -33,6 +33,24 @@ function createEvent(overrides: Record<string, string> = {}) {
   });
 }
 
+// Provisions an attendee slot and RSVPs into it, as the attend modal does
+function addAttendee(eventID: string, name: string, visible = true) {
+  cy.request("POST", `/attendee/provision?eventID=${eventID}`).then((res) => {
+    cy.request({
+      method: "POST",
+      url: `/event/${eventID}/attendee`,
+      form: true,
+      body: {
+        removalPassword: res.body.removalPassword,
+        attendeeName: name,
+        attendeeNumber: "1",
+        fullForm: "1",
+        ...(visible ? { attendeeVisible: "on" } : {}),
+      },
+    });
+  });
+}
+
 describe("Guest view", () => {
   beforeEach(() => {
     cy.viewport(375, 812);
@@ -145,6 +163,51 @@ describe("Guest view", () => {
       });
       cy.get("#shareEvent").click();
       cy.get("#sharePanel").should("be.visible");
+    });
+  });
+  describe("Who's going", () => {
+    beforeEach(() => createEvent());
+
+    it("is collapsed for guests and expands on tap", function () {
+      ["Asha", "Jun", "Mo"].forEach((n) => addAttendee(this.eventID, n));
+      cy.visit(`/${this.eventID}`);
+      cy.get("#attendeesToggle")
+        .should("have.attr", "aria-expanded", "false")
+        .and("contain.text", "3 going");
+      cy.get(".avatar-stack .attendee-avatar").should("have.length", 3);
+      cy.get(".attendeesList").should("not.be.visible");
+      cy.get("#attendeesToggle").click();
+      cy.get("#attendeesToggle").should("have.attr", "aria-expanded", "true");
+      cy.get(".attendeesList")
+        .should("be.visible")
+        .and("contain.text", "Asha")
+        .and("contain.text", "Jun")
+        .and("contain.text", "Mo");
+    });
+
+    it("never shows a private attendee's avatar to guests", function () {
+      addAttendee(this.eventID, "Asha");
+      addAttendee(this.eventID, "Secret", false);
+      cy.visit(`/${this.eventID}`);
+      cy.get(".avatar-stack .attendee-avatar").should("have.length", 1);
+    });
+
+    it("has no toggle when nobody is going", function () {
+      cy.visit(`/${this.eventID}`);
+      cy.get("#attendeesToggle").should("not.exist");
+      cy.get("#eventAttendees").should("contain.text", "No attendees yet!");
+    });
+
+    it("is expanded for the host", function () {
+      addAttendee(this.eventID, "Asha");
+      cy.visit(`/${this.eventID}?e=${this.editToken}`);
+      cy.get(".attendeesList").should("be.visible");
+    });
+
+    it("has no card chrome", function () {
+      cy.visit(`/${this.eventID}`);
+      cy.get("#eventDescription .card-header").should("not.exist");
+      cy.get("#eventDescription").should("not.have.class", "card");
     });
   });
 });
