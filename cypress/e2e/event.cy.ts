@@ -145,6 +145,10 @@ describe("Events", () => {
     cy.get("#commentContent").type("Test Comment");
     cy.get("#postComment").click();
     cy.get(".comment").should("contain.text", "Test Comment");
+    // Posting lands on the plain event URL, then the page re-verifies the
+    // stored edit token and reloads with ?e=; let that settle before
+    // opening the reply box, or the reload closes it again
+    cy.url().should("include", this.editToken);
 
     cy.get(".comment .openReplyBox").first().click();
     cy.get(".comment #replyAuthor").type("Reply Author");
@@ -233,6 +237,8 @@ describe("Events", () => {
     // editable again rather than locked to the old name.
     cy.get("button#declineEvent").click();
     cy.get("#declineModal").should("be.visible");
+    // As above, wait for the fade-in to finish before typing
+    cy.get("#declineModal").should("have.focus");
     cy.get("#declineAttendeeName")
       .should("have.value", "")
       .and("not.have.attr", "readonly");
@@ -394,6 +400,9 @@ describe("Events", () => {
     const startedEventEnd = toDatetimeLocalUTC(new Date(Date.now() + oneHour));
 
     cy.get("#editEvent").click();
+    // Bootstrap moves focus onto the modal when its fade-in finishes; typing
+    // before then loses whatever is typed after that focus change
+    cy.get("#editModal").should("have.focus");
 
     cy.get("#editEventForm #eventName").focus();
     cy.get("#editEventForm #eventName").clear();
