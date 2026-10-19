@@ -456,6 +456,13 @@ body > #container {
   }
 }
 
+/* The three ways to start on /new, stacked so each label fits */
+.new-start-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 /* TOP BAR (kept as #sidebar so older selectors still match) */
 
 #sidebar .sidebar-sticky-wrapper {
@@ -636,11 +643,6 @@ ul#sidebar__nav a:hover {
   margin-bottom: 1.5rem;
 }
 
-@media (min-width: 992px) {
-  #event__basics {
-    grid-template-columns: 3fr 1fr;
-  }
-}
 
 .event-title {
   margin-top: 1.25rem;

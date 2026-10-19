@@ -1,17 +1,15 @@
 <main class="page" x-data="{currentTab: null}">
 <h2 class="mb-3 pb-2 text-center border-bottom">{{t "views.newevent.pagetitle" }}</h2>
-<div class="container-fluid mb-4">
-  <div class="row">
-    <div class="col-lg-4 p-2">
+<div class="new-start-buttons mb-4">
+    <div>
       <button type="button" id="showNewEventFormButton" class="button w-100" x-bind:class="currentTab === 'event' ? 'button--primary' : 'button--secondary'" x-on:click="currentTab = 'event'"><i class="fas fa-calendar-day"></i> {{t "views.newevent.neweventbutton" }}</button>
     </div>
-    <div class="col-lg-4 p-2">
+    <div>
       <button type="button" id="showImportEventFormButton" class="button w-100" x-bind:class="currentTab === 'importEvent' ? 'button--primary' : 'button--secondary'" x-on:click="currentTab = 'importEvent'"><i class="fas fa-file-import"></i> {{t "views.newevent.importevent" }}</button>
     </div>
-    <div class="col-lg-4 p-2">
+    <div>
       <button type="button" id="showNewEventGroupFormButton" class="button w-100" x-bind:class="currentTab === 'group' ? 'button--primary' : 'button--secondary'" x-on:click="currentTab = 'group'"><i class="fas fa-calendar-alt"></i> {{t "views.newevent.neweventgroup" }} </button>
     </div>
-  </div>
 </div>
 
 <div class="alert alert-info mb-4 text-center" role="alert">
