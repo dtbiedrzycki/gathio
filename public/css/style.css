@@ -593,26 +593,6 @@ ul#sidebar__nav a:hover {
   flex: none;
 }
 
-.quick-actions__edit {
-  flex: none;
-  background: none;
-  border: none;
-  padding: 0 0.25rem;
-  font-size: 0.85rem;
-  color: var(--color-grey-40);
-  text-decoration: underline;
-  white-space: nowrap;
-}
-
-.quick-actions__edit:hover {
-  color: var(--color-purple-dark);
-}
-
-.quick-actions__edit:disabled {
-  color: var(--color-grey-75);
-  text-decoration: none;
-}
-
 .share-panel {
   margin-top: 0.75rem;
   padding: 0.75rem;
@@ -642,8 +622,7 @@ ul#sidebar__nav a:hover {
   overflow-wrap: anywhere;
 }
 
-.button:focus-visible,
-.quick-actions__edit:focus-visible {
+.button:focus-visible {
   outline: 2px solid var(--color-purple-dark);
   outline-offset: 2px;
 }

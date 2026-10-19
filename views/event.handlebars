@@ -82,9 +82,6 @@
       <i class="fas fa-map-marked"></i> {{t "views.event.showonGM" }}
     </a>
   {{/if}}
-  {{#unless editingEnabled}}
-    <button type="button" id="editEvent" class="quick-actions__edit" {{#if eventHasConcluded}}disabled{{/if}} data-event-id="{{eventData.id}}" data-toggle="modal" data-target="#editTokenModal"><i class="fas fa-edit"></i> {{t "views.eventgroup.editmode" }}</button>
-  {{/unless}}
 </div>
 
 <div id="sharePanel" class="share-panel" hidden>
@@ -537,36 +534,6 @@
 {{> rsvpConfirmModal }}
 {{> recoverLinkModal }}
 
-<div class="modal fade" id="editTokenModal" tabindex="-1" role="dialog" aria-labelledby="editTokenModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editTokenModalLabel">{{t "views.edittoken" }}</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <form id="verifyTokenForm" action="/verifytoken/event/{{eventData.id}}" method="post">
-      <div class="modal-body">
-        <div class="form-group">
-          <p class="form-text small">{{t "views.edittokendesc" }}</p>
-          <div class="form-group">
-            <input type="text" class="form-control" id="editToken" name="editToken" placeholder="{{t "views.right" }}" data-validation="required">
-          </div>
-          <div class="form-group">
-              <div class="alert alert-danger" style="display:none;"></div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="button button--secondary" data-dismiss="modal">{{t "common.close" }}</button>
-        <button type="submit" class="button button--primary">{{t "views.event.edit" }}</button>
-      </div>
-      </form>
-    </div>
-  </div>
-</div>
-
 {{#if editingEnabled}}
 {{#unless eventHasConcluded}}
 {{> editeventmodal }}
@@ -898,26 +865,6 @@ window.gathioClearAttendeeInfo = function(eventID) {
       if (!removalPassword) return;
       $('#reattendRemovalPassword, #declineExistingRemovalPassword').val(removalPassword);
     })();
-
-      $('#verifyTokenForm').on('submit', function(e) {
-        e.preventDefault();
-        let form = $(this);
-        $.ajax({
-            type: "POST",
-            url: form.attr('action'),
-            data: form.serialize(),
-            success: function(response, status, xhr) {
-                if (xhr.status === 200) {
-                    // Save the token to localStorage for later
-                    addStoredToken($('#eventName').attr('data-event-id'), new FormData(form[0]).get('editToken'));
-                    window.location.search = `?e=${new FormData(form[0]).get('editToken')}&show_edit=true`;
-                }
-            },
-            error: function(response, status, xhr) {
-               form.find('.alert').text('{{t "views.incorrectpswd" }}').show();
-            }
-        });
-      });
 
     $('#deleteEvent').on('click', function() {
         $('#editModal').modal('hide');
