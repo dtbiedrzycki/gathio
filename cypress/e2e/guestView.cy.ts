@@ -249,8 +249,11 @@ describe("Guest view", () => {
       cy.visit(`/${this.eventID}`);
       cy.get("button#declineEvent").click();
       cy.get("#declineModal").should("be.visible");
+      // Focus lands once the modal's fade-in finishes
+      cy.get("#declineModal").should("have.focus");
       cy.get("#declineAttendeeName").type("Cannot Come");
       cy.get("form#declineEventForm").submit();
+      cy.get("button#changeRsvp").click();
       cy.get("button#reattendEvent").should("be.visible");
       cy.get("button#deleteMyInfo").should("be.visible");
       cy.scrollTo("bottom");
@@ -276,6 +279,29 @@ describe("Guest view", () => {
         .should("have.css", "border-top-width", "0px")
         .and("have.css", "background-color", "rgba(0, 0, 0, 0)");
       cy.get(".openReplyBox").first().should("be.visible");
+    });
+  });
+  describe("RSVP labels", () => {
+    beforeEach(() => createEvent());
+
+    it("uses the mockup's labels and tucks other actions behind Change", function () {
+      cy.visit(`/${this.eventID}`);
+      cy.get("#attendEvent").should("have.text", "I'm going");
+      cy.get("#declineEvent").should("have.text", "Can't go");
+      cy.get("button#declineEvent").click();
+      cy.get("#declineModal").should("be.visible");
+      // Focus lands once the modal's fade-in finishes
+      cy.get("#declineModal").should("have.focus");
+      cy.get("#declineAttendeeName").type("Cannot Come");
+      cy.get("form#declineEventForm").submit();
+      cy.get("#changeRsvp")
+        .should("have.text", "Change")
+        .and("have.attr", "aria-expanded", "false");
+      cy.get("#reattendEvent").should("not.be.visible");
+      cy.get("#changeRsvp").click();
+      cy.get("#reattendEvent")
+        .should("be.visible")
+        .and("have.text", "I'm going");
     });
   });
 });

@@ -1119,8 +1119,10 @@ li.hidden-attendee .attendee-name {
 }
 
 .rsvp-bar__status {
-  /* A full row of its own, so the button beside it keeps a readable width */
-  flex-basis: 100%;
+  /* Shares a row with Change, wrapping its own text rather than squeezing
+     the button */
+  flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -1131,6 +1133,17 @@ li.hidden-attendee .attendee-name {
 
 .rsvp-bar__status--declined {
   color: var(--color-danger);
+}
+
+.rsvp-bar__change {
+  flex: none;
+}
+
+.rsvp-bar__options {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .rsvp-bar__secondary {
