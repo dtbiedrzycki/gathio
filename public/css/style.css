@@ -419,7 +419,12 @@ body > #container {
 #container
   > #content
   > main.event
-  > *:not(.event-header-image, .event__editing-banner, .rsvp-bar) {
+  > *:not(
+    .event-header-image,
+    .event__editing-banner,
+    .rsvp-bar,
+    .event-section
+  ) {
   margin: 0 1rem;
 }
 
@@ -720,10 +725,14 @@ ul#sidebar__nav a:hover {
   padding-block: 1.25rem;
 }
 
-/* The section bands run edge to edge inside the page's side margins */
+/* The section bands run edge to edge; sections inside .h-event step out of
+   its side margins, and the Discussion section sits directly in main */
 main.event .event-section {
-  margin-inline: -1rem;
   padding-inline: 1rem;
+}
+
+main.event .h-event > .event-section {
+  margin-inline: -1rem;
 }
 
 .event-title + .event-facts,
@@ -1021,51 +1030,82 @@ li.hidden-attendee .attendee-name {
 }
 
 .event--has-rsvp-bar {
-  padding-bottom: 5.5rem;
+  padding-bottom: 7.5rem;
 }
 
+/* Pinned to the bottom of the screen: the guest's reply, or the buttons to
+   give one. A third, rarer action sits on a second line as a text link. */
 .rsvp-bar {
   position: fixed;
   left: 0.5rem;
   right: 0.5rem;
   bottom: 0.5rem;
   z-index: 1030;
-  margin: 0;
-  background: var(--color-purple-light);
-  border: 1px solid var(--color-purple-lighter);
-  border-radius: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-@media (min-width: 576px) {
-  .rsvp-bar {
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: 0.75rem;
-  }
+  max-width: 40rem;
+  margin: 0 auto;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
 }
 
 .rsvp-bar__inner {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
+}
+
+.rsvp-bar__inner > .button--primary,
+.rsvp-bar__form {
+  flex: 1;
+  min-width: 0;
+}
+
+.rsvp-bar__form .button {
+  width: 100%;
+}
+
+.rsvp-bar__inner .button {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rsvp-bar__status {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  padding-left: 0.25rem;
   font-weight: 600;
   color: var(--color-success);
 }
 
 .rsvp-bar__status--declined {
   color: var(--color-danger);
+}
+
+.rsvp-bar__secondary {
+  width: 100%;
+  text-align: center;
+}
+
+.rsvp-bar__link {
+  background: none;
+  border: none;
+  padding: 0.125rem 0.25rem;
+  font-size: 0.85rem;
+  color: var(--color-grey-40);
+  text-decoration: underline;
+}
+
+.rsvp-bar__link:hover {
+  color: var(--color-purple-dark);
+}
+
+.rsvp-bar__link:focus-visible {
+  outline: 2px solid var(--color-purple-dark);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1199.98px) {

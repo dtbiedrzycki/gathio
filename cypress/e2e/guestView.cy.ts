@@ -210,4 +210,41 @@ describe("Guest view", () => {
       cy.get("#eventDescription").should("not.have.class", "card");
     });
   });
+  describe("RSVP bar", () => {
+    beforeEach(() => createEvent());
+
+    it("keeps the main actions on one row at 375px", function () {
+      cy.visit(`/${this.eventID}`);
+      cy.get("#attendEvent").then(($a) => {
+        const attendTop = $a[0].getBoundingClientRect().top;
+        cy.get("#declineEvent").then(($d) => {
+          expect($d[0].getBoundingClientRect().top).to.equal(attendTop);
+        });
+        cy.get("#recoverLink")
+          .should("be.visible")
+          .then(($r) => {
+            expect($r[0].getBoundingClientRect().top).to.be.greaterThan(
+              attendTop,
+            );
+          });
+      });
+    });
+
+    it("doesn't cover the end of the page for a declined guest", function () {
+      cy.visit(`/${this.eventID}`);
+      cy.get("button#declineEvent").click();
+      cy.get("#declineModal").should("be.visible");
+      cy.get("#declineAttendeeName").type("Cannot Come");
+      cy.get("form#declineEventForm").submit();
+      cy.get("button#reattendEvent").should("be.visible");
+      cy.get("button#deleteMyInfo").should("be.visible");
+      cy.scrollTo("bottom");
+      cy.get(".rsvp-bar").then(($bar) => {
+        const barTop = $bar[0].getBoundingClientRect().top;
+        cy.get("#postComment").then(($post) => {
+          expect($post[0].getBoundingClientRect().bottom).to.be.at.most(barTop);
+        });
+      });
+    });
+  });
 });
