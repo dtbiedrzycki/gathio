@@ -54,6 +54,13 @@ h3 {
   --color-grey-20: hsl(0, 0%, 20%);
   --color--black: hsl(0, 0%, 10%);
   --color-orange: #ff8c26;
+  --color-success: hsl(145, 63%, 30%);
+  --color-danger: hsl(354, 70%, 46%);
+  --color-warning-bg: hsl(40, 100%, 94%);
+  --color-warning-ink: hsl(35, 80%, 28%);
+  --radius-sm: 0.5rem;
+  --radius-lg: 1rem;
+  --band: 8px solid var(--color-grey-97);
   --transition: 0.15s ease-in;
 }
 
@@ -253,7 +260,7 @@ label {
 
 .button--secondary {
   background: var(--color-grey-85);
-  color: var(--color-black);
+  color: var(--color--black);
 }
 
 .button--secondary:hover {
@@ -373,28 +380,29 @@ label {
 
 /* LAYOUT */
 
+/* One phone-width column at every screen size: the top bar, then the page */
+
 html {
   width: 100%;
 }
 
 body {
-  background: var(--color-grey-97);
+  background: #fff;
 }
 
 body > #container {
   min-height: 100vh;
   width: 100%;
-  max-width: 75rem;
-  display: grid;
+  max-width: 42rem;
+  display: flex;
+  flex-direction: column;
   margin: 0 auto;
-  grid-template-columns: 1fr;
-  grid-template-rows: min-content auto;
   padding: 0;
 }
 
 #container > #content {
+  flex-grow: 1;
   overflow: hidden;
-  border: 1px solid var(--color-grey-90);
   background: #fff;
   display: flex;
   flex-direction: column;
@@ -411,13 +419,18 @@ body > #container {
 #container
   > #content
   > main.event
-  > *:not(.event-header-image, .event__editing-banner, .rsvp-bar) {
+  > *:not(
+    .event-header-image,
+    .event__editing-banner,
+    .rsvp-bar,
+    .event-section
+  ) {
   margin: 0 1rem;
 }
 
 #container > #content > footer {
   margin-top: auto;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--color-grey-90);
   text-align: center;
   padding: 0.25rem 0;
   background: var(--color-grey-99);
@@ -428,60 +441,57 @@ body > #container {
 }
 
 @media (min-width: 768px) {
+  body {
+    background: var(--color-grey-97);
+  }
   body > #container {
-    padding: 1rem;
-    grid-template-columns: 1fr 4fr;
-    grid-template-rows: auto;
-    gap: 1rem;
+    padding: 0 1rem 1rem;
   }
   #container > #content {
-    border-radius: 1rem;
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-grey-90);
+    border-radius: var(--radius-lg);
   }
   #container > #content > main.page {
     padding: 2rem;
   }
 }
 
-@media (min-width: 992px) {
-  body > #container {
-    grid-template-columns: 1fr 5fr;
-  }
+/* The three ways to start on /new, stacked so each label fits */
+.new-start-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-/* SIDEBAR */
+/* TOP BAR (kept as #sidebar so older selectors still match) */
+
+#sidebar .sidebar-sticky-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 1rem;
+}
 
 #sidebar h1 {
   font-family: "Fredoka", sans-serif;
   font-weight: 700;
   font-optical-sizing: auto;
   font-style: normal;
-  text-align: center;
   letter-spacing: -0.5px;
-  font-size: 3rem;
-  color: transparent !important;
-  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  line-height: 1;
+  margin: 0;
 }
 
 #sidebar h1 a {
-  background: rgb(69, 69, 69);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent !important;
+  color: var(--color-grey-30);
+  text-decoration: none;
 }
 
 #sidebar h1 a:hover {
-  text-decoration: none;
-  background: linear-gradient(
-    to right,
-    rgb(1, 76, 173),
-    rgb(128, 224, 200),
-    var(--color-purple)
-  );
-  background-size: 100% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent !important;
+  color: var(--color-purple-dark);
 }
 
 ul#sidebar__nav {
@@ -489,43 +499,17 @@ ul#sidebar__nav {
   margin: 0;
   list-style: none;
   display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
+  gap: 1rem;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-}
-
-ul#sidebar__nav li {
-  padding: 0 1rem 0.5rem 1rem;
-  text-align: center;
 }
 
 ul#sidebar__nav a {
-  display: block;
-  width: 100%;
+  color: var(--color-grey-40);
+  font-weight: 500;
 }
 
-@media (min-width: 768px) {
-  #sidebar {
-    padding-top: 1rem;
-  }
-  ul#sidebar__nav {
-    flex-direction: column;
-  }
-  ul#sidebar__nav li {
-    width: 100%;
-    padding: 0 0 0.5rem 0;
-  }
-  ul#sidebar__nav li:has(a:not(.button)):not(:last-child) {
-    border-bottom: 1px solid #e0e0e0;
-  }
-
-  .sidebar-sticky-wrapper {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 1rem;
-  }
+ul#sidebar__nav a:hover {
+  color: var(--color-purple-dark);
 }
 
 /* EVENTS */
@@ -543,53 +527,114 @@ ul#sidebar__nav a {
   margin: 0;
 }
 
+/* A flat band generated from the event ID stands in for a missing cover */
 #genericEventImageContainer {
-  height: 150px;
-  border-radius: 5px;
-}
-
-#genericEventImageContainer:before {
-  content: "";
-  background: linear-gradient(
-    to bottom,
-    rgba(30, 87, 153, 0) 0%,
-    rgba(242, 245, 249, 0) 75%,
-    rgba(255, 255, 255, 1) 95%,
-    rgba(255, 255, 255, 1) 100%
-  );
-  position: absolute;
-  width: 100%;
-  height: 150px;
+  height: 120px;
 }
 
 #eventImageContainer {
   position: relative;
-  border-radius: 5px;
   overflow: hidden;
 }
 
 #eventImageContainer img {
-  max-height: 300px;
   display: block;
   width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 320px;
   height: auto;
   object-fit: cover;
 }
 
-#eventImageContainer:before {
-  content: "";
-  background: linear-gradient(
-    to bottom,
-    rgba(30, 87, 153, 0) 0%,
-    rgba(242, 245, 249, 0) 85%,
-    rgba(255, 255, 255, 1) 95%,
-    rgba(255, 255, 255, 1) 100%
-  );
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+/* Event facts: an unboxed list of round icon chips and text */
+.event-facts {
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
+.event-fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-fact__icon {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  background: var(--color-purple-light);
+  color: var(--color-purple-dark);
+}
+
+.event-fact__text {
+  min-width: 0;
+  padding-top: 0.2rem;
+}
+
+.p-location {
+  font-weight: 600;
+}
+
+/* Quick actions: pills that wrap onto more lines on narrow screens, so
+   every action is visible without scrolling */
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.quick-actions > .button {
+  flex: none;
+}
+
+.share-panel {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-purple-light);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.share-panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+
+.share-panel__label {
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--color-grey-40);
+}
+
+.share-panel__value {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-purple-dark);
+  outline-offset: 2px;
+}
+
+/* The group page still uses the older facts card and action stack */
 #event__basics {
   display: grid;
   grid-template-columns: 1fr;
@@ -598,29 +643,146 @@ ul#sidebar__nav a {
   margin-bottom: 1.5rem;
 }
 
-@media (min-width: 992px) {
-  #event__basics {
-    grid-template-columns: 3fr 1fr;
-  }
+.event-title {
+  margin-top: 1.25rem;
 }
 
 #eventName {
-  padding: 0 0 0 10px;
-  width: 100%;
+  font-weight: 600;
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  padding: 0;
+  margin: 0;
+}
+
+.event-when {
+  margin-top: 0.4rem;
+  color: var(--color-purple-dark);
+  font-weight: 600;
+}
+
+.event-when__relative {
+  display: block;
+  color: var(--color-grey-40);
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.event-when__relative::first-letter {
+  text-transform: capitalize;
+}
+
+.event-title__actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  #eventName {
+    font-size: 2.5rem;
+  }
 }
 
 #eventPrivacy {
   text-transform: capitalize;
 }
 
-#eventFromNow {
-  padding-left: 25px;
+/* Page sections: separated by a tinted band rather than boxed in cards */
+.event-section {
+  border-top: var(--band);
+  padding-block: 1.25rem;
 }
 
-#eventFromNow::first-letter {
-  text-transform: capitalize;
+/* The section bands run edge to edge; sections inside .h-event step out of
+   its side margins, and the Discussion section sits directly in main */
+main.event .event-section {
+  padding-inline: 1rem;
+}
+
+main.event .h-event > .event-section {
+  margin-inline: -1rem;
+}
+
+.share-panel + .event-section {
+  margin-top: 1.25rem;
+}
+
+.event-section__title {
+  font-family: "Fredoka", sans-serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin: 0 0 0.75rem;
+}
+
+.p-summary > :last-child {
+  margin-bottom: 0;
+}
+
+/* Who's going: overlapping avatars and a count that expand the full list */
+.attendees-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.25rem 0;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.attendees-toggle:focus-visible {
+  outline: 2px solid var(--color-purple-dark);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.avatar-stack {
+  display: flex;
+}
+
+.avatar-stack .attendee-avatar {
+  border: 2px solid #fff;
+  box-sizing: content-box;
+}
+
+.avatar-stack .attendee-avatar + .attendee-avatar {
+  margin-left: -0.5rem;
+}
+
+.attendees-toggle__count {
+  font-weight: 600;
+}
+
+.attendees-toggle__chevron {
+  margin-left: auto;
+  color: var(--color-grey-50);
+  transition: transform var(--transition);
+}
+
+.attendees-toggle[aria-expanded="true"] .attendees-toggle__chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attendees-toggle__chevron {
+    transition: none;
+  }
+}
+
+.attendees-capacity {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-warning-ink);
+}
+
+#attendeesListWrap {
+  margin-top: 0.5rem;
 }
 
 .attendeesList {
@@ -632,7 +794,6 @@ ul#sidebar__nav a {
   gap: 0.5rem;
 }
 
-#event__actions #editEvent,
 #event__actions #editGroup {
   width: 100%;
   margin-top: 16px;
@@ -640,20 +801,13 @@ ul#sidebar__nav a {
 
 .attendeesList > li {
   display: flex;
-  /* Top-aligned so the avatar and actions stay put on tall cards (e.g. with
+  /* Top-aligned so the avatar and actions stay put on tall rows (e.g. with
      custom question answers); the first row's 2rem min-height keeps
-     single-line cards looking vertically centered */
+     single-line rows looking vertically centered */
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  background: #f8f9fa;
-  border-radius: 0.375rem;
-  border: 1px solid #dee2e6;
-}
-
-.attendeesList > li.hidden-attendee {
-  background: #e9ecef;
-  border-style: dashed;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-grey-90);
 }
 
 .attendee-avatar {
@@ -753,7 +907,7 @@ ul#sidebar__nav a {
 }
 
 .attendeesList > li.hidden-attendee a {
-  color: #555;
+  color: var(--color-grey-40);
 }
 
 .attendeesList > li.hidden-attendee .attendee-avatar {
@@ -761,9 +915,7 @@ ul#sidebar__nav a {
 }
 
 .attendeesList > li.hidden-attendees-item {
-  justify-content: center;
-  background: var(--color-grey-97);
-  border-style: dashed;
+  justify-content: flex-start;
   font-size: 0.9em;
 }
 
@@ -782,9 +934,9 @@ ul#sidebar__nav a {
 }
 
 .hidden-section {
-  color: var(--color-grey-50);
+  color: var(--color-grey-40);
   border: 1px dashed var(--color-grey-70);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   display: flex;
   gap: 5px;
   flex-direction: column;
@@ -796,104 +948,189 @@ ul#sidebar__nav a {
   margin-left: 5px;
 }
 
+/* Comments read as a plain thread: no boxes, replies hang off a hairline */
+.commentsList {
+  margin-top: 0.5rem;
+}
+
 .commentContainer {
-  background: #fafafa;
-  border-radius: 5px;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #dfdfdf;
+  margin: 0;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-grey-90);
+}
+
+.commentContainer > [class*="col"] {
+  padding: 0;
+}
+
+.commentText > p:last-child {
+  margin-bottom: 0;
+}
+
+.commentMetadata {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 992px) {
+  .commentMetadata {
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+}
+
+.comment-action {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--color-grey-40);
+}
+
+.comment-action:hover {
+  color: var(--color-purple-dark);
+}
+
+.comment-action.deleteComment:hover {
+  color: var(--color-danger);
+}
+
+.comment-action:focus-visible {
+  outline: 2px solid var(--color-purple-dark);
+  outline-offset: 2px;
 }
 
 .replyContainer {
   display: none;
-  background: #efefef;
-  padding: 10px;
-  border-radius: 0 0 5px 5px;
-  border-bottom: 1px solid #d2d2d2;
-  border-left: 1px solid #d2d2d2;
-  border-right: 1px solid #d2d2d2;
-  width: 95%;
-  margin: -10px auto 10px auto;
+  margin: 0;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-grey-90);
+}
+
+.replyContainer > [class*="col"] {
+  padding: 0;
 }
 
 .repliesContainer {
-  font-size: smaller;
-  padding-left: 20px;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--color-grey-90);
 }
 
 .attendee-name {
-  color: #212529;
+  color: var(--color--black);
 }
 
 li.hidden-attendee .attendee-name {
-  color: #6c757d;
+  color: var(--color-grey-40);
   font-style: italic;
 }
 
 .remove-attendee {
-  color: #6c757d;
+  color: var(--color-grey-40);
 }
 
 .remove-attendee:hover {
-  color: #dc3545;
+  color: var(--color-danger);
 }
 
-.edit-buttons {
-  text-align: right;
+/* Room below the footer so the pinned RSVP bar never covers the end of
+   the page */
+/* Same ids as the layout's own footer rule, which would otherwise win */
+#container > #content > .event--has-rsvp-bar + footer {
+  padding-bottom: 7.5rem;
 }
 
-.event--has-rsvp-bar {
-  padding-bottom: 5.5rem;
-}
-
+/* Pinned to the bottom of the screen: the guest's reply, or the buttons to
+   give one. A third, rarer action sits on a second line as a text link. */
 .rsvp-bar {
   position: fixed;
   left: 0.5rem;
   right: 0.5rem;
   bottom: 0.5rem;
   z-index: 1030;
-  margin: 0;
-  background: var(--color-purple-light);
-  border: 1px solid var(--color-purple-lighter);
-  border-radius: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-@media (min-width: 576px) {
-  .rsvp-bar {
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: 0.75rem;
-  }
+  max-width: 40rem;
+  margin: 0 auto;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
 }
 
 .rsvp-bar__inner {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
 }
 
+.rsvp-bar__inner > .button--primary,
+.rsvp-bar__form {
+  flex: 1;
+  min-width: 0;
+}
+
+.rsvp-bar__form .button {
+  width: 100%;
+}
+
+.rsvp-bar__inner .button {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .rsvp-bar__status {
+  /* Shares a row with Change, wrapping its own text rather than squeezing
+     the button */
+  flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  padding-left: 0.25rem;
   font-weight: 600;
-  color: #28a745;
+  color: var(--color-success);
 }
 
 .rsvp-bar__status--declined {
-  color: #dc3545;
+  color: var(--color-danger);
 }
 
-@media (max-width: 1199.98px) {
-  .edit-buttons {
-    text-align: left;
-  }
+.rsvp-bar__change {
+  flex: none;
+}
+
+.rsvp-bar__options {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.rsvp-bar__secondary {
+  width: 100%;
+  text-align: center;
+}
+
+.rsvp-bar__link {
+  background: none;
+  border: none;
+  padding: 0.125rem 0.25rem;
+  font-size: 0.85rem;
+  color: var(--color-grey-40);
+  text-decoration: underline;
+}
+
+.rsvp-bar__link:hover {
+  color: var(--color-purple-dark);
+}
+
+.rsvp-bar__link:focus-visible {
+  outline: 2px solid var(--color-purple-dark);
+  outline-offset: 2px;
 }
 
 .code {
@@ -911,7 +1148,7 @@ li.hidden-attendee .attendee-name {
   overflow: hidden;
   background-color: #ffffff;
   color: #ecf0f1;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   border: 1px dashed #ced4da;
 }
 .image-preview input {
@@ -927,7 +1164,7 @@ li.hidden-attendee .attendee-name {
   opacity: 0.8;
   cursor: pointer;
   background-color: #ced4da;
-  color: #555;
+  color: var(--color-grey-40);
   width: 200px;
   height: 50px;
   font-size: 20px;
@@ -939,7 +1176,7 @@ li.hidden-attendee .attendee-name {
   bottom: 0;
   margin: auto;
   text-align: center;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
 }
 
 /* FORMS */
@@ -948,7 +1185,7 @@ li.hidden-attendee .attendee-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #6c757d;
+  color: var(--color-grey-40);
 }
 
 .select2-container {
@@ -1090,7 +1327,7 @@ img.group-preview__image {
 
 article.static-page header {
   margin-bottom: 1rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--color-grey-90);
 }
 
 /* MODALS */
@@ -1120,4 +1357,27 @@ article.static-page header {
   border: none;
   border-radius: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+main.event .badge-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-ink);
+  font-weight: 600;
+}
+
+/* Page notices, restyled through the palette */
+main.event .alert {
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+main.event .alert-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-ink);
+}
+
+main.event .alert-success,
+main.event .alert-info {
+  background: var(--color-purple-light);
+  color: var(--color-purple-dark);
 }

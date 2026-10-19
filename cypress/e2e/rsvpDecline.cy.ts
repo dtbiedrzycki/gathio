@@ -54,6 +54,13 @@ describe("RSVP Decline", () => {
       "contain.text",
       "You said you can't attend",
     );
+    // The "save your link" modal covers the bar until closed; Bootstrap
+    // ignores the close click until its fade-in has finished
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("have.focus");
+    cy.get("#rsvpConfirmModal .close").click();
+    cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("not.be.visible");
+    // The other actions sit behind the bar's Change button
+    cy.get("button#changeRsvp").click();
     cy.get("button#reattendEvent").should("be.visible");
     cy.get("button#deleteMyInfo").should("be.visible");
     cy.get("#eventDeclined").should("not.exist");
@@ -92,6 +99,7 @@ describe("RSVP Decline", () => {
     cy.get(".attendeesList").should("contain.text", "Maybe Later");
 
     // Switch to declined
+    cy.get("button#changeRsvp").click();
     cy.get("button#declineExisting").click();
     cy.get("#rsvpConfirmModal", { timeout: 10000 }).should("be.visible");
     // Bootstrap only moves focus onto the modal once its fade-in
@@ -112,6 +120,7 @@ describe("RSVP Decline", () => {
     cy.get("#eventAttendees").should("not.contain.text", "Maybe Later");
 
     // Switch back to attending
+    cy.get("button#changeRsvp").click();
     cy.get("button#reattendEvent").click();
     cy.get(".rsvp-bar__status").should("contain.text", "You're going");
     cy.get(".attendeesList").should("contain.text", "Maybe Later");
@@ -158,6 +167,7 @@ describe("RSVP Decline", () => {
     // Reaching this modal always means the token was already resolved (from
     // the ?p= the decline redirect carried), so there's no password/code
     // field to fill in - just a confirmation to submit.
+    cy.get("button#changeRsvp").click();
     cy.get("button#deleteMyInfo").click();
     cy.get("#unattendModal").should("be.visible");
     cy.get("#unattendModal input[type=text], #unattendModal input[type=password]").should(

@@ -633,6 +633,7 @@ router.get("/:eventID", async (req: Request, res: Response) => {
         parsedDescription: parsedDescription,
         editingEnabled: editingEnabled,
         eventHasCoverImage: eventHasCoverImage,
+        coverColor: stringToColor(event.id),
         eventHasHost: eventHasHost,
         firstLoad: firstLoad,
         eventHasConcluded: eventHasConcluded,
@@ -793,6 +794,7 @@ router.get("/group/:eventGroupID", async (req: Request, res: Response) => {
       parsedDescription: parsedDescription,
       editingEnabled: editingEnabled,
       eventGroupHasCoverImage: eventGroupHasCoverImage,
+      coverColor: stringToColor(eventGroup.id),
       eventGroupHasHost: eventGroupHasHost,
       firstLoad: firstLoad,
       approveRegistrations: false, // group view no longer uses global gating; per-event handled when mapping

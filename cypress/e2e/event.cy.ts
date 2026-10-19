@@ -225,6 +225,7 @@ describe("Events", () => {
       .should("have.value", "Test Decliner")
       .and("have.attr", "readonly");
 
+    cy.get("button#changeRsvp").click();
     cy.get("button#deleteMyInfo").click();
     cy.get("#unattendModal").should("be.visible");
     cy.get("#unattendEventForm button[type=submit]").click();
