@@ -13,7 +13,7 @@
 {{/if}}
 <div class="h-event">
 <div class="event-title">
-  <h3 class="p-name" id="eventName" data-event-id="{{eventData.id}}">{{eventData.name}}</h3>
+  <h2 class="p-name" id="eventName" data-event-id="{{eventData.id}}">{{eventData.name}}</h2>
   <div class="event-when">
     <span class="dt-duration">{{{displayDate}}}</span>
     <time class="dt-start" datetime="{{eventStartISO}}"></time>
@@ -78,7 +78,7 @@
     <i class="fas fa-download"></i> {{t "views.event.ICSexport" }}
   </button>
   {{#if viewerApprovedForLocation}}
-    <a target="_blank" href="http://maps.google.com/?q={{parsedLocation}}" class="button button--outline-secondary button--sm">
+    <a target="_blank" rel="noopener noreferrer" href="http://maps.google.com/?q={{parsedLocation}}" class="button button--outline-secondary button--sm">
       <i class="fas fa-map-marked"></i> {{t "views.event.showonGM" }}
     </a>
   {{/if}}
@@ -118,7 +118,7 @@
 </div>
 {{/if}}
 <section class="event-section" id="eventDescription">
-  <h2 class="event-section__title">{{t "views.event.about" }}</h2>
+  <h3 class="event-section__title">{{t "views.event.about" }}</h3>
   <div class="p-summary">
     {{{parsedDescription}}}
   </div>
@@ -126,10 +126,10 @@
 
 {{#if eventData.usersCanAttend}}
 <section class="event-section" id="eventAttendees">
-  <h2 class="event-section__title">{{t "views.event.attendees" }}</h2>
+  <h3 class="event-section__title">{{t "views.event.attendees" }}</h3>
     {{#if numberOfAttendees}}
       {{#unless attendeesListHidden}}
-        <button type="button" id="attendeesToggle" class="attendees-toggle" aria-controls="attendeesListWrap" aria-expanded="{{#if editingEnabled}}true{{else}}false{{/if}}">
+        <button type="button" id="attendeesToggle" class="attendees-toggle" aria-label="{{plural "views.event.goingtogglelabel" numberOfAttendees }}" aria-controls="attendeesListWrap" aria-expanded="{{#if editingEnabled}}true{{else}}false{{/if}}">
           <span class="avatar-stack" aria-hidden="true">
             {{#each (avatarStack attendees 5)}}
               <span class="attendee-avatar" style="background-color: {{this.avatarColor}}">{{this.avatarLetter}}</span>
@@ -240,8 +240,8 @@
 {{#if editingEnabled}}
   {{#if numberOfDeclined}}
     <section class="event-section" id="eventDeclined">
-      <h2 class="event-section__title">{{t "views.event.cantattend"}}
-        {{t "views.event.numberofcantattend"}}</h2>
+      <h3 class="event-section__title">{{t "views.event.cantattend"}}
+        {{t "views.event.numberofcantattend"}}</h3>
         <ul class="attendeesList">
           {{#each declinedAttendees}}
             <li
@@ -409,7 +409,7 @@
         <span class="rsvp-bar__status rsvp-bar__status--declined">
           <i class="fas fa-times-circle"></i> {{t "views.event.youdeclined" }}
         </span>
-        <button type="button" id="changeRsvp" class="button button--outline-secondary rsvp-bar__change" aria-expanded="false" aria-controls="rsvpChangeOptions">{{t "views.event.changersvp" }}</button>
+        <button type="button" id="changeRsvp" class="button button--outline-secondary rsvp-bar__change" aria-label="{{t "views.event.changersvplabel" }}" aria-expanded="false" aria-controls="rsvpChangeOptions">{{t "views.event.changersvp" }}</button>
         <div id="rsvpChangeOptions" class="rsvp-bar__options" hidden>
           <form id="reattendEventForm" class="rsvp-bar__form" action="/event/{{eventData.id}}/attendee" method="post">
             <input type="hidden" name="removalPassword" id="reattendRemovalPassword">
@@ -429,7 +429,7 @@
               <i class="fas fa-check"></i> {{t "views.event.youaregoing" }}
             {{/if}}
           </span>
-          <button type="button" id="changeRsvp" class="button button--outline-secondary rsvp-bar__change" aria-expanded="false" aria-controls="rsvpChangeOptions">{{t "views.event.changersvp" }}</button>
+          <button type="button" id="changeRsvp" class="button button--outline-secondary rsvp-bar__change" aria-label="{{t "views.event.changersvplabel" }}" aria-expanded="false" aria-controls="rsvpChangeOptions">{{t "views.event.changersvp" }}</button>
           <div id="rsvpChangeOptions" class="rsvp-bar__options" hidden>
             <form id="declineExistingForm" class="rsvp-bar__form" action="/event/{{eventData.id}}/attendee" method="post">
               <input type="hidden" name="removalPassword" id="declineExistingRemovalPassword">
@@ -455,7 +455,7 @@
 
 {{#if eventData.usersCanComment}}
 <section class="event-section" id="eventComments">
-  <h2 class="event-section__title">{{t "views.event.discussion" }}</h2>
+  <h3 class="event-section__title">{{t "views.event.discussion" }}</h3>
   <div>
     <form id="commentForm" action="/post/comment/{{eventData.id}}/" method="post">
       <label for="commentAuthor">{{t "views.event.commentauthor" }}</label>
@@ -562,7 +562,6 @@
 </div>
 
 {{/if}}
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="/js/modules/event-page.js"></script>
 
 <script>
@@ -747,6 +746,19 @@ window.gathioClearAttendeeInfo = function(eventID) {
       $('#recoverLinkForm button[type="submit"]').show();
     });
 
+    // POSTs JSON and resolves with { data } like the axios calls this
+    // replaced; rejects on a non-2xx status
+    function postJSON(url, body) {
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json().then((data) => ({ data }));
+      });
+    }
+
     // Recover-your-link form (views/partials/recoverLinkModal.handlebars):
     // always returns the same generic message whether or not the email
     // matches an attendee, so this can't be used to check who's RSVPed.
@@ -754,7 +766,7 @@ window.gathioClearAttendeeInfo = function(eventID) {
       e.preventDefault();
       const form = $(this);
       const email = $('#recoverLinkEmail').val();
-      axios.post('/event/{{eventData.id}}/resend-link', { email })
+      postJSON('/event/{{eventData.id}}/resend-link', { email })
         .then((response) => {
           $('#recoverLinkModalDescription').hide();
           $('#recoverLinkMessage').text(response.data.message).show();
@@ -811,7 +823,7 @@ window.gathioClearAttendeeInfo = function(eventID) {
     $('#attendEvent').on('click', function() {
       const modal = $('#attendModal');
       const eventID = $(this).attr('data-event-id');
-      axios.post('/attendee/provision', {}, { params: { eventID }})
+      postJSON(`/attendee/provision?eventID=${encodeURIComponent(eventID)}`, {})
         .then((response) => {
           modal.find('#removalPassword').val(response.data.removalPassword);
           // Persist removal password locally for auto ?p injection
@@ -837,7 +849,7 @@ window.gathioClearAttendeeInfo = function(eventID) {
     $('#declineEvent').on('click', function() {
       const modal = $('#declineModal');
       const eventID = $(this).attr('data-event-id');
-      axios.post('/attendee/provision', {}, { params: { eventID }})
+      postJSON(`/attendee/provision?eventID=${encodeURIComponent(eventID)}`, {})
         .then((response) => {
           modal.find('#declineRemovalPassword').val(response.data.removalPassword);
           try {

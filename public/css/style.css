@@ -821,10 +821,6 @@ main.event .h-event > .event-section {
   border-bottom: 1px solid var(--color-grey-90);
 }
 
-.attendeesList > li.hidden-attendee {
-  opacity: 0.85;
-}
-
 .attendee-avatar {
   width: 2rem;
   height: 2rem;
@@ -949,7 +945,7 @@ main.event .h-event > .event-section {
 }
 
 .hidden-section {
-  color: var(--color-grey-50);
+  color: var(--color-grey-40);
   border: 1px dashed var(--color-grey-70);
   border-radius: var(--radius-sm);
   display: flex;
@@ -1055,7 +1051,10 @@ li.hidden-attendee .attendee-name {
   text-align: right;
 }
 
-.event--has-rsvp-bar {
+/* Room below the footer so the pinned RSVP bar never covers the end of
+   the page */
+/* Same ids as the layout's own footer rule, which would otherwise win */
+#container > #content > .event--has-rsvp-bar + footer {
   padding-bottom: 7.5rem;
 }
 
