@@ -579,14 +579,14 @@ ul#sidebar__nav a:hover {
   font-weight: 600;
 }
 
-/* Quick actions: one row of pills that scrolls sideways on narrow screens */
+/* Quick actions: pills that wrap onto more lines on narrow screens, so
+   every action is visible without scrolling */
 .quick-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  overflow-x: auto;
   margin-top: 1rem;
-  padding-bottom: 0.25rem;
 }
 
 .quick-actions > .button {
