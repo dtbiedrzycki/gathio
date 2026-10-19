@@ -33,92 +33,77 @@
     {{message}}
 </div>
 {{/if}}
-<div id="event__basics">
-  <div class="card" id="event__data">
-    <div class="card-body">
-      <ul class="fa-ul eventInformation">
-        <li>
-          <span class="fa-li">
-            <i class="fas fa-map-marker-alt"></i>
-          </span>
-          {{#if viewerApprovedForLocation}}
-            <span class="p-location">{{eventData.location}}</span>
-          {{else}}
-          <div class="hidden-section">
-            <span><i class="fas fa-lock"></i> {{t "views.event.location_hidden" }}</span>
-            <span class="small text-muted">{{t "views.event.location_hidden_desc" }}</span>
-          </div>
-          {{/if}}
-        </li>
-        {{#if eventHasHost}}
-          <li id="hosted-by">
-            <span class="fa-li">
-              <i class="fas fa-fw fa-user-circle"></i>
-            </span>
-            <span class="text-muted">{{{t "views.event.hostedby" }}}
-          </li>
-        {{/if}}
-        {{#if eventData.eventGroup}}
-          <li id="event-group">
-            <span class="fa-li">
-              <i class="fas fa-fw fa-calendar-alt"></i>
-            </span>
-            <span class="text-muted">{{{t "views.event.partof" }}}</span>
-          </li>
-        {{/if}}
-        {{#if eventData.url}}
-          <li>
-            <span class="fa-li">
-              <i class="fas fa-fw fa-link"></i>
-            </span>
-            <a href="{{eventData.url}}">
-              {{eventData.url}}
-            </a>
-          </li>
-        {{/if}}
-        <li>
-          <span class="fa-li">
-            <i class="fas fa-fw fa-users"></i>
-          </span>
-          <span class="text-muted">{{ t "views.event.publiclink" }}:</span>
-          <a class="u-url" href="https://{{domain}}/{{eventData.id}}">https://{{domain}}/{{eventData.id}}</a>
-          <button type="button" id="copyEventLink" class="eventInformationAction button button--outline-secondary button--sm" data-clipboard-text="https://{{domain}}/{{eventData.id}}">
-            <i class="fas fa-copy"></i> {{t "common.copy" }}
-          </button>
-        </li>
-        {{#if isFederated}}
-        <li>
-          <span class="fa-li fa-fw fediverse-icon"><img src="/images/fediverse-icon.svg" alt="Fediverse Icon" /></span>
-          <span class="text-muted">{{ t "views.event.fediverselink" }}:</span>
-          @{{eventData.id}}@{{domain}}
-          <button type="button" id="copyAPLink" class="eventInformationAction button button--outline-secondary button--sm" data-clipboard-text="@{{eventData.id}}@{{domain}}">
-            <i class="fas fa-copy"></i> {{t "common.copy" }}
-          </button>
-        </li>
-        {{/if}}
-      </ul>
-    </div> <!-- .card-body -->
-  </div> <!-- .card#event__data -->
-  
-  <aside id="event__actions">
-      <div class="button-stack" role="group" aria-label="Event actions">
-        <a href="http://www.google.com/calendar/event?action=TEMPLATE&dates={{parsedStart}}%2F{{parsedEnd}}&text={{escapedName}}&location={{calendarLocationParam}}&ctz={{timezone}}" class="button button--outline-secondary button--sm">
-          <i class="far fa-calendar-plus"></i> {{t "views.event.addtoGC" }}
-        </a>
-        <button type="button" id="exportICS" class="button button--outline-secondary button--sm" data-event-id="{{eventData.id}}">
-          <i class="fas fa-download"></i> {{t "views.event.ICSexport" }}
-        </button>
-        {{#if viewerApprovedForLocation}}
-          <a target="_blank" href="http://maps.google.com/?q={{parsedLocation}}" class="button button--outline-secondary button--sm" title="{{t "views.event.location_hidden" }}">
-            <i class="fas fa-map-marked"></i> {{t "views.event.showonGM" }}
-          </a>
-        {{/if}}
+<ul class="event-facts">
+  <li class="event-fact">
+    <span class="event-fact__icon" aria-hidden="true"><i class="fas fa-map-marker-alt"></i></span>
+    <div class="event-fact__text">
+      {{#if viewerApprovedForLocation}}
+        <span class="p-location">{{eventData.location}}</span>
+      {{else}}
+      <div class="hidden-section">
+        <span><i class="fas fa-lock"></i> {{t "views.event.location_hidden" }}</span>
+        <span class="small">{{t "views.event.location_hidden_desc" }}</span>
       </div>
+      {{/if}}
+    </div>
+  </li>
+  {{#if eventHasHost}}
+    <li class="event-fact" id="hosted-by">
+      <span class="event-fact__icon" aria-hidden="true"><i class="fas fa-user"></i></span>
+      <div class="event-fact__text">{{{t "views.event.hostedby" }}}</div>
+    </li>
+  {{/if}}
+  {{#if eventData.eventGroup}}
+    <li class="event-fact" id="event-group">
+      <span class="event-fact__icon" aria-hidden="true"><i class="fas fa-calendar-alt"></i></span>
+      <div class="event-fact__text">{{{t "views.event.partof" }}}</div>
+    </li>
+  {{/if}}
+  {{#if eventData.url}}
+    <li class="event-fact">
+      <span class="event-fact__icon" aria-hidden="true"><i class="fas fa-link"></i></span>
+      <div class="event-fact__text"><a href="{{eventData.url}}">{{eventData.url}}</a></div>
+    </li>
+  {{/if}}
+</ul>
 
-    {{#unless editingEnabled}}
-        <button type="button" id="editEvent" class="button button--outline-secondary button--sm" {{#if eventHasConcluded}}disabled{{/if}} data-event-id="{{eventData.id}}" data-toggle="modal" data-target="#editTokenModal"><i class="fas fa-edit"></i> {{t "views.eventgroup.editmode" }}</button>
-    {{/unless}}
-  </aside> <!-- #event__actions -->
+<div class="quick-actions" role="group" aria-label="Event actions">
+  <a href="http://www.google.com/calendar/event?action=TEMPLATE&dates={{parsedStart}}%2F{{parsedEnd}}&text={{escapedName}}&location={{calendarLocationParam}}&ctz={{timezone}}" class="button button--outline-secondary button--sm">
+    <i class="far fa-calendar-plus"></i> {{t "views.event.addtoGC" }}
+  </a>
+  <button type="button" id="exportICS" class="button button--outline-secondary button--sm" data-event-id="{{eventData.id}}">
+    <i class="fas fa-download"></i> {{t "views.event.ICSexport" }}
+  </button>
+  {{#if viewerApprovedForLocation}}
+    <a target="_blank" href="http://maps.google.com/?q={{parsedLocation}}" class="button button--outline-secondary button--sm">
+      <i class="fas fa-map-marked"></i> {{t "views.event.showonGM" }}
+    </a>
+  {{/if}}
+  <button type="button" id="shareEvent" class="button button--outline-secondary button--sm" aria-controls="sharePanel" data-share-title="{{eventData.name}}" data-share-url="https://{{domain}}/{{eventData.id}}">
+    <i class="fas fa-share-alt"></i> {{t "views.event.sharebutton" }}
+  </button>
+  {{#unless editingEnabled}}
+    <button type="button" id="editEvent" class="quick-actions__edit" {{#if eventHasConcluded}}disabled{{/if}} data-event-id="{{eventData.id}}" data-toggle="modal" data-target="#editTokenModal"><i class="fas fa-edit"></i> {{t "views.eventgroup.editmode" }}</button>
+  {{/unless}}
+</div>
+
+<div id="sharePanel" class="share-panel" hidden>
+  <div class="share-panel__row">
+    <span class="share-panel__label">{{ t "views.event.publiclink" }}</span>
+    <a class="u-url share-panel__value" href="https://{{domain}}/{{eventData.id}}">https://{{domain}}/{{eventData.id}}</a>
+    <button type="button" id="copyEventLink" class="eventInformationAction button button--outline-secondary button--sm" data-clipboard-text="https://{{domain}}/{{eventData.id}}">
+      <i class="fas fa-copy"></i> {{t "common.copy" }}
+    </button>
+  </div>
+  {{#if isFederated}}
+  <div class="share-panel__row">
+    <span class="share-panel__label">{{ t "views.event.fediverselink" }}</span>
+    <span class="share-panel__value">@{{eventData.id}}@{{domain}}</span>
+    <button type="button" id="copyAPLink" class="eventInformationAction button button--outline-secondary button--sm" data-clipboard-text="@{{eventData.id}}@{{domain}}">
+      <i class="fas fa-copy"></i> {{t "common.copy" }}
+    </button>
+  </div>
+  {{/if}}
 </div>
 
 {{#if eventHasConcluded}}
@@ -592,6 +577,7 @@
 
 {{/if}}
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="/js/modules/event-page.js"></script>
 
 <script>
 window.eventData = {{{ json jsonData }}};

@@ -95,4 +95,56 @@ describe("Guest view", () => {
       });
     });
   });
+  describe("Facts and sharing", () => {
+    beforeEach(() => createEvent());
+
+    it("keeps the public link out of the facts until Share is used", function () {
+      cy.visit(`/${this.eventID}`, {
+        onBeforeLoad(win) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          delete (win.navigator as any).share;
+        },
+      });
+      cy.get("#sharePanel").should("not.be.visible");
+      cy.get("#copyEventLink").should("not.be.visible");
+      cy.get(".event-facts").should("not.contain.text", `/${this.eventID}`);
+      cy.get("#shareEvent").click();
+      cy.get("#sharePanel")
+        .should("be.visible")
+        .and("contain.text", `/${this.eventID}`);
+      cy.get("#copyEventLink").should("be.visible");
+    });
+
+    it("uses the native share sheet when available", function () {
+      cy.visit(`/${this.eventID}`, {
+        onBeforeLoad(win) {
+          Object.defineProperty(win.navigator, "share", {
+            value: cy.stub().as("share").resolves(),
+            configurable: true,
+          });
+        },
+      });
+      cy.get("#shareEvent").click();
+      cy.get("@share").should("have.been.calledOnce");
+      cy.get("@share").then((stub) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const arg = (stub as any).firstCall.args[0];
+        expect(arg.url).to.match(new RegExp(`/${this.eventID}$`));
+      });
+      cy.get("#sharePanel").should("not.be.visible");
+    });
+
+    it("opens the panel when the share sheet is cancelled", function () {
+      cy.visit(`/${this.eventID}`, {
+        onBeforeLoad(win) {
+          Object.defineProperty(win.navigator, "share", {
+            value: cy.stub().rejects(new DOMException("cancel", "AbortError")),
+            configurable: true,
+          });
+        },
+      });
+      cy.get("#shareEvent").click();
+      cy.get("#sharePanel").should("be.visible");
+    });
+  });
 });

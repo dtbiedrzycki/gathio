@@ -535,6 +535,115 @@ ul#sidebar__nav a:hover {
   object-fit: cover;
 }
 
+/* Event facts: an unboxed list of round icon chips and text */
+.event-facts {
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.event-fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-fact__icon {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  background: var(--color-purple-light);
+  color: var(--color-purple-dark);
+}
+
+.event-fact__text {
+  min-width: 0;
+  padding-top: 0.2rem;
+}
+
+.p-location {
+  font-weight: 600;
+}
+
+/* Quick actions: one row of pills that scrolls sideways on narrow screens */
+.quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  margin-top: 1rem;
+  padding-bottom: 0.25rem;
+}
+
+.quick-actions > .button {
+  flex: none;
+}
+
+.quick-actions__edit {
+  flex: none;
+  background: none;
+  border: none;
+  padding: 0 0.25rem;
+  font-size: 0.85rem;
+  color: var(--color-grey-40);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.quick-actions__edit:hover {
+  color: var(--color-purple-dark);
+}
+
+.quick-actions__edit:disabled {
+  color: var(--color-grey-75);
+  text-decoration: none;
+}
+
+.share-panel {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-purple-light);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.share-panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+
+.share-panel__label {
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--color-grey-40);
+}
+
+.share-panel__value {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.button:focus-visible,
+.quick-actions__edit:focus-visible {
+  outline: 2px solid var(--color-purple-dark);
+  outline-offset: 2px;
+}
+
+/* The group page still uses the older facts card and action stack */
 #event__basics {
   display: grid;
   grid-template-columns: 1fr;
