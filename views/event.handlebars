@@ -9,18 +9,24 @@
     <img src="/events/{{eventData.image}}" alt="">
   </div>
 {{else}}
-  <div class="event-header-image" id="genericEventImageContainer" style="background-image: url(/images/seigaiha.png);"></div>
+  <div class="event-header-image" id="genericEventImageContainer" style="background-color: {{coverColor}};"></div>
 {{/if}}
 <div class="h-event">
-<div class="row p-0">
-  <div class="col-lg">
-      <h3 class="p-name" id="eventName" data-event-id="{{eventData.id}}">{{eventData.name}}</h3>
+<div class="event-title">
+  <h3 class="p-name" id="eventName" data-event-id="{{eventData.id}}">{{eventData.name}}</h3>
+  <div class="event-when">
+    <span class="dt-duration">{{{displayDate}}}</span>
+    <time class="dt-start" datetime="{{eventStartISO}}"></time>
+    <time class="dt-end" datetime="{{eventEndISO}}"></time>
+    <span class="event-when__relative">
+      {{#if eventHasBegun}}{{#unless eventHasConcluded}}{{t "views.event.started"}} {{else}}{{t "views.event.ended"}} {{/unless}}{{/if}}{{fromNow}}
+    </span>
   </div>
-  <div class="col-lg-4 ml-2 edit-buttons">
-    {{#if editingEnabled}}
-      <button type="button" id="editEvent" class="button button--primary ml-auto d-block" {{#if eventHasConcluded}}disabled{{/if}} data-event-id="{{eventData.id}}" data-toggle="modal" data-target="#editModal"><i class="fas fa-edit"></i> {{t "views.event.edit" }}</button>
-    {{/if}}
-  </div>
+  {{#if editingEnabled}}
+    <div class="event-title__actions">
+      <button type="button" id="editEvent" class="button button--primary" {{#if eventHasConcluded}}disabled{{/if}} data-event-id="{{eventData.id}}" data-toggle="modal" data-target="#editModal"><i class="fas fa-edit"></i> {{t "views.event.edit" }}</button>
+    </div>
+  {{/if}}
 </div>
 {{#if message}}
 <div class="alert alert-info mt-3 text-center" role="alert" id="event__message">
@@ -43,18 +49,6 @@
             <span class="small text-muted">{{t "views.event.location_hidden_desc" }}</span>
           </div>
           {{/if}}
-        </li>
-        <li>
-          <span class="fa-li">
-            <i class="fas fa-fw fa-calendar-day"></i>
-          </span>
-          <span class="dt-duration">{{{displayDate}}}</span>
-          <time class="dt-start" datetime="{{eventStartISO}}"></time>
-          <time class="dt-end" datetime="{{eventEndISO}}"></time>
-          <br>
-          <span class="text-muted">
-            {{#if eventHasBegun}}{{#unless eventHasConcluded}}{{t "views.event.started"}} {{else}}{{t "views.event.ended"}} {{/unless}}{{/if}}{{fromNow}}
-          </span>
         </li>
         {{#if eventHasHost}}
           <li id="hosted-by">

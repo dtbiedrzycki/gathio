@@ -53,4 +53,46 @@ describe("Guest view", () => {
       });
     });
   });
+
+  describe("Cover and title", () => {
+    it("uses a flat colour band when there is no image", function () {
+      createEvent();
+      cy.get("@eventID").then((id) => cy.visit(`/${id}`));
+      cy.get("#genericEventImageContainer")
+        .should("have.attr", "style")
+        .and("match", /background-color:\s*hsl\(/)
+        .and("not.contain", "seigaiha");
+      cy.get("#genericEventImageContainer").should(
+        "have.css",
+        "background-image",
+        "none",
+      );
+    });
+
+    it("puts the date directly under a large title", function () {
+      createEvent();
+      cy.get("@eventID").then((id) => cy.visit(`/${id}`));
+      cy.get("#eventName").then(($n) => {
+        expect(parseFloat(getComputedStyle($n[0]).fontSize)).to.be.at.least(30);
+        const nameBottom = $n[0].getBoundingClientRect().bottom;
+        cy.get(".event-when .dt-duration").should("exist");
+        cy.get(".event-when").then(($w) => {
+          expect($w[0].getBoundingClientRect().top - nameBottom).to.be.at.most(
+            24,
+          );
+        });
+      });
+    });
+
+    it("wraps a very long name and URL without sideways scroll", function () {
+      createEvent({
+        eventName: "Supercalifragilisticexpialidocious".repeat(4),
+        eventURL: "https://example.com/" + "a".repeat(120),
+      });
+      cy.get("@eventID").then((id) => cy.visit(`/${id}`));
+      cy.document().then((d) => {
+        expect(d.documentElement.scrollWidth).to.be.at.most(375);
+      });
+    });
+  });
 });
