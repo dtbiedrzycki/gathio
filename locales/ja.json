@@ -241,7 +241,7 @@
   "views.interaction": "ユーザーにコメントを許可する",
   "views.join": "ユーザーは自分で参加登録する",
   "views.layouts.main.defaultmetadata": "より簡単に、より速く、プライバシー侵害のより小さく、イベントを作成・共有する方法",
-  "views.layouts.main.footnote": "<strong>Gathio</strong> {{version}} バージョン &middot; <a href=\"https://github.com/lowercasename/gathio\">GitHub</a> &middot; <a href=\"https://raphaelkabo.com\">Raphael</a> と <a href=\"https://github.com/lowercasename/gathio/graphs/contributors\">協力者たち</a> が <i class=\"far fa-heart\"></i> を込めて作成しています。",
+  "views.layouts.main.footnote": "<strong>Gathio</strong> {{version}} バージョン &middot; <a href=\"https://github.com/lowercasename/gathio\">GitHub</a> &middot; <a href=\"https://raphaelkabo.com\">Raphael</a> と <a href=\"https://github.com/lowercasename/gathio/graphs/contributors\">協力者たち</a> が <i class=\"far fa-heart\"></i> を込めて作成しています。 &middot; Modified <a href=\"https://github.com/dtbiedrzycki/gathio/tree/feat/mad-customizations\">fork</a> by <a href=\"https://github.com/dtbiedrzycki\">dtbiedrzycki</a>",
   "views.newevent.createnew": "イベントを作成",
   "views.newevent.groupattention": "イベントグループは、イベントのように自動削除されることはありません。しかし、{{siteName}} から削除されたイベントは、当然ですが、イベントグループに表示されません。",
   "views.newevent.groupdesc": "イベントグループは、リンクしたイベントをまとめる機能です。例えば、シリーズものの映画上映会、いくつかのイベントに分かれるフェス、バンドのツアーなどに便利です。個々のイベントへの公開リンクのように、グループの公開リンクを共有することができます。また秘密の編集パスワード（グループ作成時にメール送信）を知っているメンバーは、今後のイベントをグループに追加することができます。",
