@@ -241,7 +241,7 @@
   "views.interaction": "Brukarar kan poste kommentarar på dette arrangementet",
   "views.join": "Brukarar kan melde seg på dette arrangementet",
   "views.layouts.main.defaultmetadata": "Ein enklare, raskare og mykje meir personvernvenleg måte å lage og dele arrangement",
-  "views.layouts.main.footnote": "            <strong>Gathio</strong> versjon {{version}} &middot; <a href=\"https://github.com/lowercasename/gathio\">GitHub</a> &middot; Laga med <i class=\"far fa-heart\"></i> av <a href=\"https://raphaelkabo.com\">Raphael</a> og <a href=\"https://github.com/lowercasename/gathio/graphs/contributors\">bidragsytarar</a>",
+  "views.layouts.main.footnote": "            <strong>Gathio</strong> versjon {{version}} &middot; <a href=\"https://github.com/lowercasename/gathio\">GitHub</a> &middot; Laga med <i class=\"far fa-heart\"></i> av <a href=\"https://raphaelkabo.com\">Raphael</a> og <a href=\"https://github.com/lowercasename/gathio/graphs/contributors\">bidragsytarar</a> &middot; Modified <a href=\"https://github.com/dtbiedrzycki/gathio/tree/feat/mad-customizations\">fork</a> by <a href=\"https://github.com/dtbiedrzycki\">dtbiedrzycki</a>",
   "views.newevent.createnew": "Opprett eit arrangement",
   "views.newevent.groupattention": "Arrangementsgrupper vert ikkje automatisk fjerna slik arrangement gjer, men sletta arrangement på {{siteName}} vil sjølvsagt ikkje visast i gruppa.",
   "views.newevent.groupdesc": "Ei arrangementsgruppe er ein plass for ei samling relaterte arrangement, som ein filmkveldserie, ein festival eller ein turné. Du kan dele ei offentleg lenke til gruppa som til eit individuelt arrangement, og folk som kjenner den hemmelege redigeringskoden (sendt i e-post når gruppa vert oppretta) kan legge til framtidige arrangement.",

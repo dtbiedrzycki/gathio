@@ -340,7 +340,7 @@
   "views.interaction": "Users can post comments on this event",
   "views.join": "Users can mark themselves as attending this event",
   "views.layouts.main.defaultmetadata": "An easier, quicker, and much less privacy-invading way to make and share events",
-  "views.layouts.main.footnote": "            <strong>Gathio</strong> version {{version}} &middot; <a href=\"https://github.com/lowercasename/gathio\">GitHub</a> &middot; Made with <i class=\"far fa-heart\"></i> by <a href=\"https://raphaelkabo.com\">Raphael</a> and <a href=\"https://github.com/lowercasename/gathio/graphs/contributors\">contributors</a>",
+  "views.layouts.main.footnote": "            <strong>Gathio</strong> version {{version}} &middot; <a href=\"https://github.com/lowercasename/gathio\">GitHub</a> &middot; Made with <i class=\"far fa-heart\"></i> by <a href=\"https://raphaelkabo.com\">Raphael</a> and <a href=\"https://github.com/lowercasename/gathio/graphs/contributors\">contributors</a> &middot; Modified <a href=\"https://github.com/dtbiedrzycki/gathio/tree/feat/mad-customizations\">fork</a> by <a href=\"https://github.com/dtbiedrzycki\">dtbiedrzycki</a>",
   "views.newevent.createnew": "Create an event",
   "views.newevent.groupattention": "Event groups do not get automatically removed like events do, but events which have been removed from {{siteName}} will of course not show up in an event group.",
   "views.newevent.groupdesc": "An event group is a holding area for a set of linked events, like a series of film nights, a festival, or a band tour. You can share a public link to your event group just like an individual event link, and people who know the secret editing code (sent in an email when you create the event group) will be able to add future events to the group.",
