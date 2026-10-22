@@ -567,6 +567,7 @@
 
 {{/if}}
 <script src="/js/modules/event-page.js"></script>
+<script src="/js/modules/rsvp-effects.js"></script>
 
 <script>
 window.eventData = {{{ json jsonData }}};
@@ -735,6 +736,7 @@ window.gathioClearAttendeeInfo = function(eventID) {
       if (rsvpConfirmMessages[messageType]) {
         showRsvpConfirmModal(rsvpConfirmMessages[messageType]);
       }
+      window.gathioRsvpEffects.play(messageType);
       url.searchParams.delete('m');
       url.searchParams.delete('noemail');
       history.replaceState(history.state, '', url.href);
