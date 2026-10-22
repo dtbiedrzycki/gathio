@@ -1208,6 +1208,9 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     // RSVP and a one-click "switch back to attending" toggle (which sends
     // only removalPassword + attendeeStatus, no other fields). Fields not
     // present in the request keep their existing value on the record.
+    if (!(attendeeName || attendee.name)) {
+      return res.status(400).json({ error: "Name is required." });
+    }
     const effectiveNumber =
       attendeeNumber !== undefined
         ? parseInt(attendeeNumber, 10) || 1

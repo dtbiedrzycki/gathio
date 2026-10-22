@@ -914,9 +914,18 @@ window.gathioClearAttendeeInfo = function(eventID) {
         const nameStore = JSON.parse(localStorage.getItem('gathioAttendeeNames') || '{}');
         const storedName = nameStore[eventID];
         if (storedName) {
-          $('input[name="attendeeName"], input[name="commentAuthor"], input[name="replyAuthor"]')
+          $('input[name="commentAuthor"], input[name="replyAuthor"]')
             .val(storedName)
             .attr('readonly', true);
+          // A name saved before the 40-character limit is cut to fit and left
+          // editable, so the guest can fix it instead of hitting the server's 400
+          const $rsvpName = $('input[name="attendeeName"]');
+          const maxLength = Number($rsvpName.attr('maxlength')) || 40;
+          if (storedName.length > maxLength) {
+            $rsvpName.val(storedName.slice(0, maxLength));
+          } else {
+            $rsvpName.val(storedName).attr('readonly', true);
+          }
         }
       } catch(e) { /* ignore */ }
     })();
