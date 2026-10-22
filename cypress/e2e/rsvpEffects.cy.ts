@@ -5,7 +5,12 @@
 // A module, so these helpers don't clash with guestView.cy.ts's of the same name
 export {};
 
-function createEvent(overrides: Record<string, string> = {}) {
+// A second event in one test gets its own alias: re-aliasing @eventID inside
+// a test leaks onto Mocha's `this` and into the tests after it
+function createEvent(
+  overrides: Record<string, string> = {},
+  alias = "eventID",
+) {
   cy.request({
     method: "POST",
     url: "/event",
@@ -32,8 +37,8 @@ function createEvent(overrides: Record<string, string> = {}) {
       ...overrides,
     },
   }).then((response) => {
-    cy.wrap(response.body.eventID).as("eventID");
-    cy.wrap(response.body.editToken).as("editToken");
+    cy.wrap(response.body.eventID).as(alias);
+    if (alias === "eventID") cy.wrap(response.body.editToken).as("editToken");
   });
 }
 
@@ -167,8 +172,8 @@ describe("RSVP effects", () => {
     });
 
     it("stays still for a pending RSVP", function () {
-      createEvent({ approveRegistrationsCheckbox: "true" });
-      cy.get("@eventID").then((id) =>
+      createEvent({ approveRegistrationsCheckbox: "true" }, "approvalEventID");
+      cy.get("@approvalEventID").then((id) =>
         rsvpAndLand(String(id), "Sam", "attending"),
       );
       cy.location("search").should("include", "p=");
@@ -216,8 +221,8 @@ describe("RSVP effects", () => {
     it("plays the burst when the list is hidden", function () {
       // An unapproved viewer gets attendeesListHidden, but approval-gated
       // events redirect with rsvppending, so land on rsvpgoing by hand
-      createEvent({ approveRegistrationsCheckbox: "true" });
-      cy.get("@eventID").then((id) => {
+      createEvent({ approveRegistrationsCheckbox: "true" }, "approvalEventID");
+      cy.get("@approvalEventID").then((id) => {
         rsvpAndLand(String(id), "Sam", "attending");
         cy.get("@removalPassword").then((p) =>
           cy.visit(`/${id}?p=${p}&m=rsvpgoing`),
