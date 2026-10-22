@@ -1,11 +1,13 @@
 // One-off moments after a guest replies, played from the ?m= flag the RSVP
 // redirect leaves on the URL (so each plays once): an emoji burst for "I'm
-// going", with the guest's own row opened and highlighted. With reduced
-// motion nothing moves; a still emoji and a still tint stand in.
+// going", with the guest's own row opened and highlighted, and a small wave
+// for "Can't go". With reduced motion nothing moves; a still emoji and a
+// still tint stand in.
 (function () {
   const DEFAULT_CELEBRATION_EMOJI = "😀";
   const BURST_SIZE = 16;
   const BURST_CLEANUP_MS = 2500;
+  const WAVE_CLEANUP_MS = 1900;
 
   function prefersReducedMotion() {
     return (
@@ -101,9 +103,32 @@
     if (check) check.classList.add("rsvp-pop");
   }
 
+  function waveGoodbye() {
+    if (prefersReducedMotion()) {
+      // After "delete my info" there's no status to hold it, so nothing shows
+      addStillEmoji("👋");
+      return;
+    }
+    const origin = barOrigin();
+    const wave = document.createElement("div");
+    wave.className = "rsvp-wave";
+    wave.setAttribute("aria-hidden", "true");
+    wave.style.left = origin.left + 24 + "px";
+    wave.style.top = origin.top + "px";
+    const hand = document.createElement("span");
+    hand.className = "rsvp-wave__hand";
+    hand.textContent = "👋";
+    wave.appendChild(hand);
+    document.body.appendChild(wave);
+    setTimeout(() => wave.remove(), WAVE_CLEANUP_MS);
+  }
+
   function play(messageType) {
     try {
       if (messageType === "rsvpgoing") celebrateGoing();
+      if (messageType === "rsvpdeclined" || messageType === "rsvperased") {
+        waveGoodbye();
+      }
     } catch (e) {
       // A missed flourish must never break the page
       console.error(e);
