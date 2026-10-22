@@ -1489,6 +1489,41 @@ main.event .alert-info {
   }
 }
 
+/* The guest's own row, just after they join: slides in, glows, fades */
+.attendeesList > li.attendee--just-joined,
+.attendeesList > li.attendee--just-joined-still {
+  padding-inline: 0.5rem;
+  margin-inline: -0.5rem;
+  border-radius: 0.625rem;
+}
+
+.attendee--just-joined {
+  animation:
+    rsvp-row-in 320ms cubic-bezier(0.2, 0.8, 0.3, 1) both,
+    rsvp-glow 3200ms 200ms ease-out both;
+}
+
+.attendee--just-joined-still {
+  background: var(--color-purple-light);
+}
+
+@keyframes rsvp-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes rsvp-glow {
+  0%,
+  35% {
+    background: hsl(273, 44%, 90%);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
 /* The still stand-in for an effect when motion is reduced */
 .rsvp-bar__emoji {
   font-size: 1.25rem;
@@ -1502,5 +1537,10 @@ main.event .alert-info {
 
   .rsvp-pop {
     animation: none;
+  }
+
+  .attendee--just-joined {
+    animation: none;
+    background: var(--color-purple-light);
   }
 }

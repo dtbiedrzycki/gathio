@@ -1,7 +1,7 @@
 // One-off moments after a guest replies, played from the ?m= flag the RSVP
 // redirect leaves on the URL (so each plays once): an emoji burst for "I'm
-// going". With reduced motion nothing moves; a still emoji sits in the RSVP
-// bar instead.
+// going", with the guest's own row opened and highlighted. With reduced
+// motion nothing moves; a still emoji and a still tint stand in.
 (function () {
   const DEFAULT_CELEBRATION_EMOJI = "😀";
   const BURST_SIZE = 16;
@@ -68,8 +68,31 @@
     setTimeout(() => layer.remove(), BURST_CLEANUP_MS);
   }
 
+  // Opens Who's going and marks the guest's own row. Sets the disclosure's
+  // state directly rather than clicking it: jQuery's ready handlers (which
+  // call play) can run before event-page.js has wired the toggle up.
+  function highlightViewerRow(reduced) {
+    const row = document.querySelector(".attendeesList li.is-viewer");
+    if (!row) return;
+    const toggle = document.getElementById("attendeesToggle");
+    const list = document.getElementById("attendeesListWrap");
+    if (toggle && list && list.hidden) {
+      toggle.setAttribute("aria-expanded", "true");
+      list.hidden = false;
+    }
+    row.classList.add(
+      reduced ? "attendee--just-joined-still" : "attendee--just-joined",
+    );
+    row.scrollIntoView({
+      block: "nearest",
+      behavior: reduced ? "auto" : "smooth",
+    });
+  }
+
   function celebrateGoing() {
-    if (prefersReducedMotion()) {
+    const reduced = prefersReducedMotion();
+    highlightViewerRow(reduced);
+    if (reduced) {
       addStillEmoji(celebrationEmoji());
       return;
     }
