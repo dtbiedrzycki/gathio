@@ -890,11 +890,12 @@ main.event .h-event > .event-section {
   color: var(--color-grey-60);
 }
 
+/* Wraps rather than cutting off, so a reply naming several people and its
+   "(3 people)" always show in full */
 .attendee-info .attendee-name {
   flex-shrink: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Marks the viewer's own row in the attendee list */
