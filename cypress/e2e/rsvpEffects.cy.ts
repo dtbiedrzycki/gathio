@@ -336,6 +336,50 @@ describe("RSVP effects", () => {
       );
     });
 
+    it("rejects a name of only spaces and keeps the page up", function () {
+      cy.request("POST", `/attendee/provision?eventID=${this.eventID}`).then(
+        (res) => {
+          cy.request({
+            method: "POST",
+            url: `/event/${this.eventID}/attendee`,
+            form: true,
+            failOnStatusCode: false,
+            body: {
+              removalPassword: res.body.removalPassword,
+              attendeeName: "   ",
+              attendeeNumber: "1",
+              fullForm: "1",
+              attendeeVisible: "on",
+            },
+          }).then((r) => {
+            expect(r.status).to.eq(400);
+            expect(r.body.error).to.eq("Name is required.");
+          });
+        },
+      );
+      cy.visit(`/${this.eventID}`);
+      cy.get("#attendEvent").should("exist");
+    });
+
+    it("lets a guest shorten a saved name over 40 characters", function () {
+      // Names saved before the limit was enforced can be longer
+      const saved = "z".repeat(45);
+      const eventID = this.eventID;
+      cy.visit(`/${eventID}`, {
+        onBeforeLoad(win) {
+          win.localStorage.setItem(
+            "gathioAttendeeNames",
+            JSON.stringify({ [eventID]: saved }),
+          );
+        },
+      });
+      cy.get("#attendEvent").click();
+      cy.get("#attendModal").should("have.focus");
+      cy.get("#attendeeName")
+        .should("have.value", "z".repeat(40))
+        .and("not.have.attr", "readonly");
+    });
+
     it("trims spaces before counting", function () {
       rsvpAndLand(this.eventID, `  ${"y".repeat(40)}  `, "attending");
       cy.get("li.is-viewer .attendee-name").should("have.text", "y".repeat(40));
