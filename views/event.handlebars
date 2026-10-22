@@ -153,11 +153,14 @@
         {{#each attendees}}
           {{!-- Skip hidden attendees for non-editors --}}
           {{#unless this.isHidden}}
-          <li data-attendee-name="{{this.name}}" data-attendee-id="{{this.id}}">
+          <li data-attendee-name="{{this.name}}" data-attendee-id="{{this.id}}"{{#if this.isViewer}} class="is-viewer"{{/if}}>
             <span class="attendee-avatar" style="background-color: {{this.avatarColor}}">{{this.avatarLetter}}</span>
             <span class="attendee-info">
               <span class="attendee-info__main">
                 <span class="attendee-name">{{this.name}}</span>
+                {{#if this.isViewer}}
+                  <span class="attendee-you">{{t "views.event.attendeeyou" }}</span>
+                {{/if}}
                 {{#if this.isPending}}
                   <span class="badge badge-warning">{{t "views.event.pending" }}</span>
                 {{/if}}
@@ -182,11 +185,14 @@
           {{!-- Hidden attendees only shown to editors --}}
           {{#if this.isHidden}}
             {{#if this.canRemove}}
-            <li data-attendee-name="{{this.name}}" data-attendee-id="{{this.id}}" class="hidden-attendee">
+            <li data-attendee-name="{{this.name}}" data-attendee-id="{{this.id}}" class="hidden-attendee{{#if this.isViewer}} is-viewer{{/if}}">
               <span class="attendee-avatar" style="background-color: {{this.avatarColor}}">{{this.avatarLetter}}</span>
               <span class="attendee-info">
                 <span class="attendee-info__main">
                   <span class="attendee-name">{{this.name}}</span>
+                  {{#if this.isViewer}}
+                    <span class="attendee-you">{{t "views.event.attendeeyou" }}</span>
+                  {{/if}}
                   <span class="text-muted">{{t "views.event.hidden" }}</span>
                   {{#if this.isPending}}
                     <span class="badge badge-warning">{{t "views.event.pending" }}</span>

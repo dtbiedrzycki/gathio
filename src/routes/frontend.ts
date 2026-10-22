@@ -62,6 +62,8 @@ interface AttendeeView {
   avatarColor: string;
   isHidden: boolean;
   isPending: boolean;
+  // The person viewing the page (identified by their ?p= link)
+  isViewer: boolean;
   canApprove: boolean;
   canRemove: boolean;
   canCopyLink: boolean;
@@ -506,6 +508,7 @@ router.get("/:eventID", async (req: Request, res: Response) => {
             avatarColor: stringToColor(a.name),
             isHidden,
             isPending,
+            isViewer: !!isViewerAttendee(a),
             // Actions: only available to host
             canApprove: editingEnabled && isPending,
             canRemove: editingEnabled,
