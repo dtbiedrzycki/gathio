@@ -301,6 +301,25 @@ describe("RSVP effects", () => {
       );
     });
 
+    it("offers to show or hide all the names, not just mine", function () {
+      cy.visit(`/${this.eventID}`);
+      cy.get("#attendEvent").click();
+      cy.get("label[for=attendeeVisible]")
+        .invoke("text")
+        .then((text) =>
+          expect(text.trim()).to.equal(
+            "Show these names in the public list of attendees",
+          ),
+        );
+      cy.get("#attendeeVisible")
+        .closest(".form-check")
+        .find(".form-text")
+        .should(
+          "have.text",
+          "If you hide them, only the event organiser will be able to see them.",
+        );
+    });
+
     it("asks for everyone's names in the decline modal's label and placeholder", function () {
       cy.visit(`/${this.eventID}`);
       cy.get("#declineEvent").click();
