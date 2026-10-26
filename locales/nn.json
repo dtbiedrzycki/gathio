@@ -144,6 +144,8 @@
   "views.event.addtoGC": "Legg til i Google Kalender",
   "views.event.attendeeemail": "E-posten din (valfri)",
   "views.event.attendeename": "Namnet ditt",
+  "views.event.attendeenamesgoing": "Namnet ditt",
+  "views.event.attendeenamesdeclining": "Namnet ditt",
   "views.event.attendeenamedesc": "Eller eit alias...",
   "views.event.attendeenum": "Kor mange er de i følgjet?",
   "views.event.attendees": "Deltakarar",

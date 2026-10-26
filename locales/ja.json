@@ -144,6 +144,8 @@
   "views.event.addtoGC": "Google カレンダーに追加",
   "views.event.attendeeemail": "あなたのメールアドレス（任意）",
   "views.event.attendeename": "参加者名",
+  "views.event.attendeenamesgoing": "参加者名",
+  "views.event.attendeenamesdeclining": "参加者名",
   "views.event.attendeenamedesc": "またはニックネームとか...",
   "views.event.attendeenum": "何人で参加しますか？",
   "views.event.attendees": "参加者",

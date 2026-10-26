@@ -144,6 +144,8 @@
   "views.event.addtoGC": "Zu Google Kalender hinzufügen",
   "views.event.attendeeemail": "Deine E-Mail (optional)",
   "views.event.attendeename": "Dein Name",
+  "views.event.attendeenamesgoing": "Dein Name",
+  "views.event.attendeenamesdeclining": "Dein Name",
   "views.event.attendeenamedesc": "Oder ein Alias, vielleicht...",
   "views.event.attendeenum": "Wie viele Personen seid ihr?",
   "views.event.attendees": "Teilnehmende",

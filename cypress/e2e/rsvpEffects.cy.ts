@@ -287,6 +287,34 @@ describe("RSVP effects", () => {
       );
     });
 
+    it("asks for everyone's names in the attend modal's label and placeholder", function () {
+      cy.visit(`/${this.eventID}`);
+      cy.get("#attendEvent").click();
+      cy.get("label[for=attendeeName]").should(
+        "have.text",
+        "Names of everyone coming",
+      );
+      cy.get("#attendeeName").should(
+        "have.attr",
+        "placeholder",
+        "e.g. Laura & Bob",
+      );
+    });
+
+    it("asks for everyone's names in the decline modal's label and placeholder", function () {
+      cy.visit(`/${this.eventID}`);
+      cy.get("#declineEvent").click();
+      cy.get("label[for=declineAttendeeName]").should(
+        "have.text",
+        "Names of everyone who can't make it",
+      );
+      cy.get("#declineAttendeeName").should(
+        "have.attr",
+        "placeholder",
+        "e.g. Laura & Bob",
+      );
+    });
+
     it("shows a 40-character reply in full at phone width", function () {
       const names = "Laura, Bob & Priya Ramaswamy-Okonkwo Jr."; // exactly 40, over the old 30
       cy.visit(`/${this.eventID}`);
