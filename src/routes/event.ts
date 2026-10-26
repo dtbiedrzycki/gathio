@@ -46,6 +46,10 @@ import i18next from "i18next";
 moment.locale(i18next.language);
 const config = getConfig();
 
+// Room for a few names in one reply ("Laura & Bob"); the RSVP forms set the
+// same limit as their maxlength
+const MAX_ATTENDEE_NAME_LENGTH = 40;
+
 const storage = multer.memoryStorage();
 // Accept only JPEG, GIF or PNG images, up to 10MB
 const upload = multer({
@@ -1127,19 +1131,32 @@ router.post(
 router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
   const {
     removalPassword,
-    attendeeName,
+    attendeeName: rawAttendeeName,
     attendeeEmail,
     attendeeNumber,
     attendeeVisible,
     attendeeStatus,
     fullForm,
   } = req.body;
+  // Absent for the one-click toggle back to attending, which keeps the name
+  const attendeeName =
+    typeof rawAttendeeName === "string"
+      ? rawAttendeeName.trim()
+      : rawAttendeeName;
 
   const targetStatus: "attending" | "declined" =
     attendeeStatus === "declined" ? "declined" : "attending";
 
   if (!removalPassword) {
     return res.status(400).json({ error: "Removal password is required." });
+  }
+  if (
+    typeof attendeeName === "string" &&
+    attendeeName.length > MAX_ATTENDEE_NAME_LENGTH
+  ) {
+    return res.status(400).json({
+      error: `Names can be up to ${MAX_ATTENDEE_NAME_LENGTH} characters.`,
+    });
   }
 
   try {
@@ -1191,6 +1208,9 @@ router.post("/event/:eventID/attendee", async (req: Request, res: Response) => {
     // RSVP and a one-click "switch back to attending" toggle (which sends
     // only removalPassword + attendeeStatus, no other fields). Fields not
     // present in the request keep their existing value on the record.
+    if (!(attendeeName || attendee.name)) {
+      return res.status(400).json({ error: "Name is required." });
+    }
     const effectiveNumber =
       attendeeNumber !== undefined
         ? parseInt(attendeeNumber, 10) || 1

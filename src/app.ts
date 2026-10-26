@@ -124,12 +124,17 @@ async function initializeApp() {
       json: function (context: object) {
         return JSON.stringify(context);
       },
-      // The first few attendees guests may see, for the Who's going avatar row
+      // The first few attendees guests may see, for the Who's going avatar
+      // row - the viewer first, so they can see themselves among them
       avatarStack: function (
-        attendees: { isHidden?: boolean }[] | undefined,
+        attendees: { isHidden?: boolean; isViewer?: boolean }[] | undefined,
         max: number,
       ) {
-        return (attendees || []).filter((a) => !a.isHidden).slice(0, max);
+        const visible = (attendees || []).filter((a) => !a.isHidden);
+        return [
+          ...visible.filter((a) => a.isViewer),
+          ...visible.filter((a) => !a.isViewer),
+        ].slice(0, max);
       },
       firstLetter: function (name: string) {
         // Get the first letter of a name for avatar display

@@ -153,11 +153,14 @@
         {{#each attendees}}
           {{!-- Skip hidden attendees for non-editors --}}
           {{#unless this.isHidden}}
-          <li data-attendee-name="{{this.name}}" data-attendee-id="{{this.id}}">
+          <li data-attendee-name="{{this.name}}" data-attendee-id="{{this.id}}"{{#if this.isViewer}} class="is-viewer"{{/if}}>
             <span class="attendee-avatar" style="background-color: {{this.avatarColor}}">{{this.avatarLetter}}</span>
             <span class="attendee-info">
               <span class="attendee-info__main">
                 <span class="attendee-name">{{this.name}}</span>
+                {{#if this.isViewer}}
+                  <span class="attendee-you">{{t "views.event.attendeeyou" }}</span>
+                {{/if}}
                 {{#if this.isPending}}
                   <span class="badge badge-warning">{{t "views.event.pending" }}</span>
                 {{/if}}
@@ -182,11 +185,14 @@
           {{!-- Hidden attendees only shown to editors --}}
           {{#if this.isHidden}}
             {{#if this.canRemove}}
-            <li data-attendee-name="{{this.name}}" data-attendee-id="{{this.id}}" class="hidden-attendee">
+            <li data-attendee-name="{{this.name}}" data-attendee-id="{{this.id}}" class="hidden-attendee{{#if this.isViewer}} is-viewer{{/if}}">
               <span class="attendee-avatar" style="background-color: {{this.avatarColor}}">{{this.avatarLetter}}</span>
               <span class="attendee-info">
                 <span class="attendee-info__main">
                   <span class="attendee-name">{{this.name}}</span>
+                  {{#if this.isViewer}}
+                    <span class="attendee-you">{{t "views.event.attendeeyou" }}</span>
+                  {{/if}}
                   <span class="text-muted">{{t "views.event.hidden" }}</span>
                   {{#if this.isPending}}
                     <span class="badge badge-warning">{{t "views.event.pending" }}</span>
@@ -281,8 +287,9 @@
     <div class="modal-body">
       <div class="form-group">
         <label for="attendeeName">{{t "views.event.attendeename" }}</label>
+        <p class="form-text small" id="attendeeNameHint">{{t "views.event.attendeenamehint" }}</p>
         <div class="form-group">
-          <input type="text" class="form-control" id="attendeeName" name="attendeeName" placeholder="{{t "views.event.attendeenamedesc" }}" data-validation="required length" data-validation-length="1-30">
+          <input type="text" class="form-control" id="attendeeName" name="attendeeName" placeholder="{{t "views.event.attendeenamedesc" }}" aria-describedby="attendeeNameHint" maxlength="40" data-validation="required length" data-validation-length="1-40">
         </div>
       </div>
       <div class="form-group">
@@ -361,8 +368,9 @@
         <div class="modal-body">
           <div class="form-group">
             <label for="declineAttendeeName">{{t "views.event.attendeename" }}</label>
+            <p class="form-text small" id="declineAttendeeNameHint">{{t "views.event.attendeenamehint" }}</p>
             <div class="form-group">
-              <input type="text" class="form-control" id="declineAttendeeName" name="attendeeName" placeholder="{{t 'views.event.attendeenamedesc'}}" data-validation="required length" data-validation-length="1-30">
+              <input type="text" class="form-control" id="declineAttendeeName" name="attendeeName" placeholder="{{t 'views.event.attendeenamedesc'}}" aria-describedby="declineAttendeeNameHint" maxlength="40" data-validation="required length" data-validation-length="1-40">
             </div>
           </div>
           <input type="hidden" id="declineRemovalPassword" name="removalPassword">
@@ -561,6 +569,7 @@
 
 {{/if}}
 <script src="/js/modules/event-page.js"></script>
+<script src="/js/modules/rsvp-effects.js"></script>
 
 <script>
 window.eventData = {{{ json jsonData }}};
@@ -729,6 +738,7 @@ window.gathioClearAttendeeInfo = function(eventID) {
       if (rsvpConfirmMessages[messageType]) {
         showRsvpConfirmModal(rsvpConfirmMessages[messageType]);
       }
+      window.gathioRsvpEffects.play(messageType);
       url.searchParams.delete('m');
       url.searchParams.delete('noemail');
       history.replaceState(history.state, '', url.href);
@@ -904,9 +914,18 @@ window.gathioClearAttendeeInfo = function(eventID) {
         const nameStore = JSON.parse(localStorage.getItem('gathioAttendeeNames') || '{}');
         const storedName = nameStore[eventID];
         if (storedName) {
-          $('input[name="attendeeName"], input[name="commentAuthor"], input[name="replyAuthor"]')
+          $('input[name="commentAuthor"], input[name="replyAuthor"]')
             .val(storedName)
             .attr('readonly', true);
+          // A name saved before the 40-character limit is cut to fit and left
+          // editable, so the guest can fix it instead of hitting the server's 400
+          const $rsvpName = $('input[name="attendeeName"]');
+          const maxLength = Number($rsvpName.attr('maxlength')) || 40;
+          if (storedName.length > maxLength) {
+            $rsvpName.val(storedName.slice(0, maxLength));
+          } else {
+            $rsvpName.val(storedName).attr('readonly', true);
+          }
         }
       } catch(e) { /* ignore */ }
     })();

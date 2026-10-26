@@ -195,6 +195,8 @@
   "views.event.attendeeemail": "Your email (optional)",
   "views.event.attendeename": "Your name",
   "views.event.attendeenamedesc": "Your name or nickname",
+  "views.event.attendeeyou": "You",
+  "views.event.attendeenamehint": "Replying for more than one person? Add everyone's names, like Laura & Bob.",
   "views.event.attendeenum": "How many people in your party?",
   "views.event.attendees": "Attendees",
   "views.event.attendeevisible": "Show my name in the public list of attendees",
